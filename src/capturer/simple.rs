@@ -23,3 +23,9 @@ impl<'a> SimpleCapturer<'a> {
     );
   }
 }
+
+impl DuplicateContext {
+  pub fn simple_capturer(&self) -> SimpleCapturer {
+    SimpleCapturer::new(self)
+  }
+}
