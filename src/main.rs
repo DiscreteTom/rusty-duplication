@@ -1,5 +1,7 @@
+mod capturer;
 mod duplicate_context;
 mod manager;
+mod utils;
 
 use manager::Manager;
 
