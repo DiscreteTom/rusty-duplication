@@ -11,7 +11,7 @@ use crate::utils::Dimension;
 
 fn main() -> std::io::Result<()> {
   let manager = Manager::default().unwrap();
-  let mut capturer = manager.dup_ctxs[0].simple_capturer();
+  let mut capturer = manager.contexts[0].simple_capturer();
   println!("size: {}x{}", capturer.desc.width(), capturer.desc.height());
 
   thread::sleep(Duration::from_millis(100));

@@ -7,18 +7,20 @@ use windows::Win32::Graphics::Direct3D11::{
 use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1, IDXGIOutput1};
 
 pub struct Manager {
-  pub dup_ctxs: Vec<DuplicateContext>,
+  pub contexts: Vec<DuplicateContext>,
   timeout_ms: u32,
 }
 
 impl Manager {
+  /// Create a new manager and refresh monitor info.
   pub fn default() -> Result<Manager, &'static str> {
     Manager::new(300)
   }
 
+  /// Create a new manager and refresh monitor info.
   pub fn new(timeout_ms: u32) -> Result<Manager, &'static str> {
     let mut manager = Manager {
-      dup_ctxs: Vec::new(),
+      contexts: Vec::new(),
       timeout_ms,
     };
     match manager.refresh() {
@@ -28,7 +30,7 @@ impl Manager {
   }
 
   pub fn refresh(&mut self) -> Result<(), ()> {
-    self.dup_ctxs.clear();
+    self.contexts.clear();
 
     unsafe {
       let factory = CreateDXGIFactory1::<IDXGIFactory1>().unwrap();
@@ -81,7 +83,7 @@ impl Manager {
         for output in outputs {
           let output = output.cast::<IDXGIOutput1>().unwrap();
           let output_duplication = output.DuplicateOutput(&device).unwrap();
-          self.dup_ctxs.push(DuplicateContext::new(
+          self.contexts.push(DuplicateContext::new(
             device.clone(),
             device_context.clone(),
             output,
