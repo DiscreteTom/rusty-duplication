@@ -5,6 +5,7 @@ use windows::Win32::Graphics::{
 
 use crate::{duplicate_context::DuplicateContext, utils::Dimension};
 
+/// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
   pub desc: DXGI_OUTPUT_DESC,
   pub buffer: Vec<u8>,
