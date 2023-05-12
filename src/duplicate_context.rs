@@ -87,7 +87,10 @@ impl DuplicateContext {
     }
   }
 
-  pub fn acquire_next_frame(&self, readable_texture: &ID3D11Texture2D) -> IDXGISurface1 {
+  pub fn acquire_next_frame(
+    &self,
+    readable_texture: &ID3D11Texture2D,
+  ) -> (IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO) {
     unsafe {
       // acquire GPU texture
       let mut frame_info = DXGI_OUTDUPL_FRAME_INFO::default();
@@ -104,19 +107,25 @@ impl DuplicateContext {
       // release GPU texture
       self.output_duplication.ReleaseFrame().unwrap();
 
-      readable_texture.cast().unwrap()
+      (readable_texture.cast().unwrap(), frame_info)
     }
   }
 
-  pub fn capture_frame(&self, dest: *mut u8, len: usize, readable_texture: &ID3D11Texture2D) {
+  pub fn capture_frame(
+    &self,
+    dest: *mut u8,
+    len: usize,
+    readable_texture: &ID3D11Texture2D,
+  ) -> DXGI_OUTDUPL_FRAME_INFO {
     unsafe {
-      let frame = self.acquire_next_frame(readable_texture);
+      let (frame, info) = self.acquire_next_frame(readable_texture);
       let mut mapped_surface = DXGI_MAPPED_RECT::default();
+
       frame.Map(&mut mapped_surface, DXGI_MAP_READ).unwrap();
-
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-
       frame.Unmap().unwrap();
+
+      info
     }
   }
 }
