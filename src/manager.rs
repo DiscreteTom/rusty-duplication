@@ -29,6 +29,7 @@ impl Manager {
     }
   }
 
+  /// Refresh monitor info.
   pub fn refresh(&mut self) -> Result<(), ()> {
     self.contexts.clear();
 
