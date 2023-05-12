@@ -3,14 +3,22 @@ mod duplicate_context;
 mod manager;
 mod utils;
 
+use std::{fs::File, io::Write, thread, time::Duration};
+
 use manager::Manager;
 
-fn main() {
+use crate::utils::Dimension;
+
+fn main() -> std::io::Result<()> {
   let manager = Manager::default().unwrap();
-  let ctx = &manager.dup_ctxs[0];
-  let desc = ctx.get_desc();
-  let width = desc.DesktopCoordinates.right - desc.DesktopCoordinates.left;
-  let height = desc.DesktopCoordinates.bottom - desc.DesktopCoordinates.top;
-  let mut buffer = vec![0u8; (width * height * 4) as usize];
-  ctx.capture_frame(buffer.as_mut_ptr(), width as u32, height as u32);
+  let mut capturer = manager.dup_ctxs[0].simple_capturer();
+  println!("size: {}x{}", capturer.desc.width(), capturer.desc.height());
+
+  thread::sleep(Duration::from_millis(100));
+
+  capturer.capture();
+
+  let mut file = File::create("capture.bin")?;
+  file.write_all(&capturer.buffer)?;
+  Ok(())
 }
