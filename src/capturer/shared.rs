@@ -14,8 +14,8 @@ use windows::Win32::{
   System::Memory::PAGE_READWRITE,
 };
 
-use crate::utils::Result;
-use crate::{duplicate_context::DuplicateContext, utils::Dimension};
+use crate::duplicate_context::DuplicateContext;
+use crate::utils::{calc_buffer_size, Result};
 
 use super::model::Capturer;
 
@@ -45,7 +45,7 @@ impl<'a> SharedCapturer<'a> {
     name: &String,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer_size = (desc.width() * desc.height() * 4) as usize;
+    let buffer_size = calc_buffer_size(desc);
 
     unsafe {
       let file = CreateFileMappingA(

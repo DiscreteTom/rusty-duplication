@@ -3,8 +3,8 @@ use windows::Win32::Graphics::{
   Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
 };
 
-use crate::utils::Result;
-use crate::{duplicate_context::DuplicateContext, utils::Dimension};
+use crate::duplicate_context::DuplicateContext;
+use crate::utils::{calc_buffer_size, Result};
 
 use super::model::Capturer;
 
@@ -27,7 +27,7 @@ impl<'a> SimpleCapturer<'a> {
 
   fn allocate(ctx: &'a DuplicateContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
+    let buffer = vec![0u8; calc_buffer_size(desc)];
     Ok((buffer, texture))
   }
 }
