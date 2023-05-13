@@ -6,9 +6,8 @@ Capture the screen on Windows using the Desktop Duplication API in Rust, with sh
 
 ## Installation
 
-```toml
-[dependencies]
-rusty-duplication = { git = "https://github.com/DiscreteTom/rusty-duplication" }
+```sh
+cargo add rusty-duplication
 ```
 
 ## Usage
