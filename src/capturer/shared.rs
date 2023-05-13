@@ -16,11 +16,13 @@ use windows::Win32::{
 
 use crate::{duplicate_context::DuplicateContext, utils::Dimension};
 
-/// Capture screen to a `Vec<u8>`.
+use super::model::Capturer;
+
+/// Capture screen to a chunk of shared memory.
 pub struct SharedCapturer<'a> {
-  pub desc: DXGI_OUTPUT_DESC,
-  pub buffer: *mut u8,
-  pub buffer_size: usize,
+  desc: DXGI_OUTPUT_DESC,
+  buffer: *mut u8,
+  buffer_size: usize,
   file: HANDLE,
   ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
@@ -62,15 +64,21 @@ impl<'a> SharedCapturer<'a> {
       }
     }
   }
+}
 
-  pub fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
+impl<'a> Capturer for SharedCapturer<'a> {
+  fn get_buffer(&self) -> &[u8] {
+    unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
+  }
+
+  fn get_desc(&self) -> DXGI_OUTPUT_DESC {
+    self.desc
+  }
+
+  fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
     self
       .ctx
       .capture_frame(self.buffer, self.buffer_size, &self.texture)
-  }
-
-  pub fn get_buffer(&self) -> &[u8] {
-    unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
 }
 

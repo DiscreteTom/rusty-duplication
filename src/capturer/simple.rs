@@ -5,10 +5,12 @@ use windows::Win32::Graphics::{
 
 use crate::{duplicate_context::DuplicateContext, utils::Dimension};
 
+use super::model::Capturer;
+
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
-  pub desc: DXGI_OUTPUT_DESC,
-  pub buffer: Vec<u8>,
+  desc: DXGI_OUTPUT_DESC, // TODO: not needed?
+  buffer: Vec<u8>,
   ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
 }
@@ -24,8 +26,18 @@ impl<'a> SimpleCapturer<'a> {
       texture: ctx.create_readable_texture(),
     }
   }
+}
 
-  pub fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
+impl Capturer for SimpleCapturer<'_> {
+  fn get_buffer(&self) -> &[u8] {
+    &self.buffer
+  }
+
+  fn get_desc(&self) -> DXGI_OUTPUT_DESC {
+    self.desc // TODO: refresh?
+  }
+
+  fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
     self
       .ctx
       .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
