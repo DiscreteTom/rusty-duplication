@@ -6,7 +6,7 @@ license = "MIT"
 authors = ["DiscreteTom <discrete_tom@outlook.com>"]
 description = "Capture the screen on Windows using the Desktop Duplication API in Rust, with shared memory support."
 repository = "https://github.com/DiscreteTom/rusty-duplication"
-keywords = ["shared-memory", "desktop-duplication-api", "windows"]
+keywords = ["shared-memory", "desktop-duplication", "windows"]
 
 
 [dependencies]
