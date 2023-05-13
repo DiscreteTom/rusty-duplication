@@ -100,5 +100,15 @@ impl Manager {
   }
 }
 
+#[cfg(test)]
+mod tests {
+  use super::Manager;
+
+  #[test]
+  fn manager() {
+    let mut manager = Manager::default().unwrap();
+    assert_ne!(manager.contexts.len(), 0);
+    manager.refresh().unwrap();
+    assert_ne!(manager.contexts.len(), 0);
   }
 }
