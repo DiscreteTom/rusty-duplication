@@ -1,4 +1,5 @@
 use crate::duplicate_context::DuplicateContext;
+use crate::utils::Result;
 use windows::core::ComInterface;
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_9_1};
 use windows::Win32::Graphics::Direct3D11::{
@@ -13,12 +14,12 @@ pub struct Manager {
 
 impl Manager {
   /// Create a new manager and refresh monitor info.
-  pub fn default() -> Result<Manager, &'static str> {
+  pub fn default() -> Result<Manager> {
     Manager::new(300)
   }
 
   /// Create a new manager and refresh monitor info.
-  pub fn new(timeout_ms: u32) -> Result<Manager, &'static str> {
+  pub fn new(timeout_ms: u32) -> Result<Manager> {
     let mut manager = Manager {
       contexts: Vec::new(),
       timeout_ms,
@@ -30,7 +31,7 @@ impl Manager {
   }
 
   /// Refresh monitor info.
-  pub fn refresh(&mut self) -> Result<(), &'static str> {
+  pub fn refresh(&mut self) -> Result<()> {
     self.contexts.clear();
 
     let factory =

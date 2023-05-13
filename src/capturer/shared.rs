@@ -14,6 +14,7 @@ use windows::Win32::{
   System::Memory::PAGE_READWRITE,
 };
 
+use crate::utils::Result;
 use crate::{duplicate_context::DuplicateContext, utils::Dimension};
 
 use super::model::Capturer;
@@ -29,8 +30,8 @@ pub struct SharedCapturer<'a> {
 }
 
 impl<'a> SharedCapturer<'a> {
-  pub fn new(ctx: &'a DuplicateContext, name: String) -> Self {
-    let desc = ctx.get_desc();
+  pub fn new(ctx: &'a DuplicateContext, name: String) -> Result<Self> {
+    let desc = ctx.get_desc()?;
     let buffer_size = (desc.width() * desc.height() * 4) as usize;
 
     unsafe {
@@ -54,14 +55,14 @@ impl<'a> SharedCapturer<'a> {
       .unwrap()
       .0 as *mut u8;
 
-      Self {
+      Ok(Self {
         desc,
         buffer,
         buffer_size,
         file,
         ctx,
-        texture: ctx.create_readable_texture(),
-      }
+        texture: ctx.create_readable_texture()?,
+      })
     }
   }
 }
@@ -75,7 +76,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
     self.desc
   }
 
-  fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
+  fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self
       .ctx
       .capture_frame(self.buffer, self.buffer_size, &self.texture)
@@ -83,7 +84,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
 }
 
 impl DuplicateContext {
-  pub fn shared_capturer(&self, name: String) -> SharedCapturer {
+  pub fn shared_capturer(&self, name: String) -> Result<SharedCapturer> {
     SharedCapturer::new(self, name)
   }
 }

@@ -1,3 +1,5 @@
+use std::result;
+
 use windows::Win32::Graphics::Dxgi::DXGI_OUTPUT_DESC;
 
 pub trait Dimension {
@@ -13,3 +15,5 @@ impl Dimension for DXGI_OUTPUT_DESC {
     (self.DesktopCoordinates.bottom - self.DesktopCoordinates.top) as u32
   }
 }
+
+pub type Result<T> = result::Result<T, &'static str>;

@@ -3,6 +3,7 @@ use windows::Win32::Graphics::{
   Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
 };
 
+use crate::utils::Result;
 use crate::{duplicate_context::DuplicateContext, utils::Dimension};
 
 use super::model::Capturer;
@@ -16,15 +17,15 @@ pub struct SimpleCapturer<'a> {
 }
 
 impl<'a> SimpleCapturer<'a> {
-  pub fn new(ctx: &'a DuplicateContext) -> Self {
-    let desc = ctx.get_desc();
+  pub fn new(ctx: &'a DuplicateContext) -> Result<Self> {
+    let desc = ctx.get_desc()?;
     let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
-    Self {
+    Ok(Self {
       desc,
       buffer,
       ctx,
-      texture: ctx.create_readable_texture(),
-    }
+      texture: ctx.create_readable_texture()?,
+    })
   }
 }
 
@@ -37,7 +38,7 @@ impl Capturer for SimpleCapturer<'_> {
     self.desc // TODO: refresh?
   }
 
-  fn capture(&mut self) -> DXGI_OUTDUPL_FRAME_INFO {
+  fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self
       .ctx
       .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
@@ -45,7 +46,7 @@ impl Capturer for SimpleCapturer<'_> {
 }
 
 impl DuplicateContext {
-  pub fn simple_capturer(&self) -> SimpleCapturer {
+  pub fn simple_capturer(&self) -> Result<SimpleCapturer> {
     SimpleCapturer::new(self)
   }
 }
