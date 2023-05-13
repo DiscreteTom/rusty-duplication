@@ -1,6 +1,8 @@
 # rusty-duplication
 
-![license](https://img.shields.io/github/license/DiscreteTom/rusty-duplication?style=flat-square)
+[![license](https://img.shields.io/crates/l/rusty-duplication?style=flat-square)](https://crates.io/crates/rusty-duplication)
+[![version](https://img.shields.io/crates/v/rusty-duplication?style=flat-square)](https://crates.io/crates/rusty-duplication)
+[![docs.rs](https://img.shields.io/docsrs/rusty-duplication?style=flat-square)](https://docs.rs/rusty-duplication/latest)
 
 Capture the screen on Windows using the Desktop Duplication API in Rust, with shared memory support.
 
@@ -28,7 +30,7 @@ fn main() {
 
   // you can get monitor info before capturing start
   // for ctx in &manager.contexts {
-  //   ctx.get_desc().unwrap();
+  //   ctx.desc().unwrap();
   // }
 
   // create capturer for a display
@@ -36,7 +38,7 @@ fn main() {
   let mut capturer = manager.contexts[0].simple_capturer().unwrap();
 
   // you can also get monitor info from a capturer
-  let desc = capturer.get_desc().unwrap();
+  let desc = capturer.desc().unwrap();
   // we have some extension methods for you such as `width/height`
   println!("size: {}x{}", desc.width(), desc.height());
 
@@ -53,9 +55,9 @@ fn main() {
   }
 
   // write to a file
-  // `get_buffer` will return `&[u8]` in BGRA32 format
+  // `buffer()` will return `&[u8]` in BGRA32 format
   let mut file = File::create("capture.bin").unwrap();
-  file.write_all(capturer.get_buffer()).unwrap();
+  file.write_all(capturer.buffer()).unwrap();
 }
 ```
 
