@@ -31,7 +31,7 @@ pub struct SharedCapturer<'a> {
 
 impl<'a> SharedCapturer<'a> {
   pub fn new(ctx: &'a DuplicateContext, name: String) -> Result<Self> {
-    let desc = ctx.get_desc()?;
+    let (texture, desc) = ctx.create_readable_texture()?;
     let buffer_size = (desc.width() * desc.height() * 4) as usize;
 
     unsafe {
@@ -61,7 +61,7 @@ impl<'a> SharedCapturer<'a> {
         buffer_size,
         file,
         ctx,
-        texture: ctx.create_readable_texture()?,
+        texture,
       })
     }
   }

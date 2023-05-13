@@ -18,13 +18,13 @@ pub struct SimpleCapturer<'a> {
 
 impl<'a> SimpleCapturer<'a> {
   pub fn new(ctx: &'a DuplicateContext) -> Result<Self> {
-    let desc = ctx.get_desc()?;
+    let (texture, desc) = ctx.create_readable_texture()?;
     let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
     Ok(Self {
       desc,
       buffer,
       ctx,
-      texture: ctx.create_readable_texture()?,
+      texture,
     })
   }
 }

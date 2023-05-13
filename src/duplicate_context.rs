@@ -50,7 +50,7 @@ impl DuplicateContext {
     Ok(desc)
   }
 
-  pub fn create_readable_texture(&self) -> Result<ID3D11Texture2D> {
+  pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTPUT_DESC)> {
     let desc = self.get_desc()?;
 
     // create a readable texture description
@@ -84,7 +84,7 @@ impl DuplicateContext {
     // https://github.com/bryal/dxgcap-rs/blob/208d93368bc64aed783791242410459c878a10fb/src/lib.rs#L225
     unsafe { readable_texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
 
-    Ok(readable_texture)
+    Ok((readable_texture, desc))
   }
 
   pub fn acquire_next_frame(
