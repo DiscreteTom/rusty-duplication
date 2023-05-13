@@ -75,6 +75,10 @@ manager.contexts[0].shared_capturer("Global\\MyFileMappingObject").unwrap();
 
 This lib provides low-level APIs like [`DuplicateContext`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/duplicate_context.rs), so you can write your own capturer. You can refer to [`SimpleCapturer`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/capturer/simple.rs)'s implementation.
 
+### Test
+
+Run the tests using `cargo test -- --test-threads=1`.
+
 ## Credit
 
 This project is based on the following projects:
