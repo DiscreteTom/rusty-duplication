@@ -26,7 +26,6 @@ pub struct SharedCapturer<'a> {
   file: HANDLE,
   ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
-  name: String,
 }
 
 impl<'a> SharedCapturer<'a> {
@@ -38,7 +37,6 @@ impl<'a> SharedCapturer<'a> {
       file,
       texture,
       ctx,
-      name,
     })
   }
 
@@ -82,18 +80,6 @@ impl<'a> SharedCapturer<'a> {
 }
 
 impl<'a> Capturer for SharedCapturer<'a> {
-  fn refresh(&mut self) -> Result<()> {
-    self.free();
-
-    let (buffer, buffer_size, file, texture) = Self::allocate(self.ctx, &self.name)?;
-
-    self.file = file;
-    self.buffer = buffer;
-    self.texture = texture;
-    self.buffer_size = buffer_size;
-    Ok(())
-  }
-
   fn get_buffer(&self) -> &[u8] {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }

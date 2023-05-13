@@ -33,13 +33,6 @@ impl<'a> SimpleCapturer<'a> {
 }
 
 impl Capturer for SimpleCapturer<'_> {
-  fn refresh(&mut self) -> Result<()> {
-    let (buffer, texture) = SimpleCapturer::allocate(self.ctx)?;
-    self.buffer = buffer;
-    self.texture = texture;
-    Ok(())
-  }
-
   fn get_buffer(&self) -> &[u8] {
     &self.buffer
   }
