@@ -131,3 +131,40 @@ impl DuplicateContext {
     Ok(info)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::{thread, time::Duration};
+
+  use crate::{
+    manager::Manager,
+    utils::{FrameInfoExt, OutputDescExt},
+  };
+
+  #[test]
+  fn duplicate_context() {
+    let manager = Manager::default().unwrap();
+    assert_ne!(manager.contexts.len(), 0);
+
+    let (texture, desc) = manager.contexts[0].create_readable_texture().unwrap();
+    let mut buffer = vec![0u8; desc.calc_buffer_size()];
+
+    // sleep for a while before capture to wait system to update the screen
+    thread::sleep(Duration::from_millis(100));
+
+    let info = manager.contexts[0]
+      .capture_frame(buffer.as_mut_ptr(), buffer.len(), &texture)
+      .unwrap();
+    assert!(info.is_new_frame());
+
+    // ensure buffer not all zero
+    let mut all_zero = true;
+    for i in 0..buffer.len() {
+      if buffer[i] != 0 {
+        all_zero = false;
+        break;
+      }
+    }
+    assert!(!all_zero);
+  }
+}
