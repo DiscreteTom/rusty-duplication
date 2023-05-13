@@ -93,6 +93,15 @@ impl<'a> Capturer for SharedCapturer<'a> {
       .ctx
       .capture_frame(self.buffer, self.buffer_size, &self.texture)
   }
+
+  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    // check buffer length
+    if self.buffer_size < calc_buffer_size(self.get_desc()?) {
+      return Err("Invalid buffer length");
+    }
+
+    self.capture()
+  }
 }
 
 impl DuplicateContext {

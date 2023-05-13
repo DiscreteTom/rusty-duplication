@@ -12,4 +12,7 @@ pub trait Capturer {
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the buffer.
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+
+  /// Check buffer size before capture.
+  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
 }
