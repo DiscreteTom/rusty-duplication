@@ -1,10 +1,12 @@
 # rusty-duplication
 
-Capture the screen on Windows using the Desktop Duplication API with Rust.
+![license](https://img.shields.io/github/license/DiscreteTom/rusty-duplication?style=flat-square)
+
+Capture the screen on Windows using the Desktop Duplication API in Rust, with shared memory support.
 
 ## Installation
 
-```rs
+```toml
 [dependencies]
 rusty-duplication = { git = "https://github.com/DiscreteTom/rusty-duplication" }
 ```
@@ -58,6 +60,22 @@ fn main() {
 }
 ```
 
+## Advanced Usage
+
+### Shared Memory
+
+You can use shared memory to share the buffer between processes.
+
+This lib provides a `SharedCapturer` which will use Windows shared memory to store the buffer. Just call `DuplicateContext.shared_capturer` with a name.
+
+```rs
+manager.contexts[0].shared_capturer("Global\\MyFileMappingObject").unwrap();
+```
+
+### Customized Capturer
+
+This lib provides low-level APIs like [`DuplicateContext`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/duplicate_context.rs), so you can write your own capturer. You can refer to [`SimpleCapturer`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/capturer/simple.rs)'s implementation.
+
 ## Credit
 
 This project is based on the following projects:
@@ -65,3 +83,5 @@ This project is based on the following projects:
 - https://github.com/bryal/dxgcap-rs
 - https://github.com/microsoft/windows-rs
 - https://github.com/hecomi/uDesktopDuplication
+
+## [CHANGELOG](https://github.com/DiscreteTom/rusty-duplication/blob/main/CHANGELOG.md)
