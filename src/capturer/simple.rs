@@ -28,6 +28,14 @@ impl<'a> SimpleCapturer<'a> {
 }
 
 impl Capturer for SimpleCapturer<'_> {
+  fn refresh(&mut self) -> Result<()> {
+    let (texture, desc) = self.ctx.create_readable_texture()?;
+    let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
+    self.buffer = buffer;
+    self.texture = texture;
+    Ok(())
+  }
+
   fn get_buffer(&self) -> &[u8] {
     &self.buffer
   }

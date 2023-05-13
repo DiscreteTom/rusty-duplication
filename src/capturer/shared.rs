@@ -26,6 +26,7 @@ pub struct SharedCapturer<'a> {
   file: HANDLE,
   ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
+  name: String,
 }
 
 impl<'a> SharedCapturer<'a> {
@@ -60,12 +61,51 @@ impl<'a> SharedCapturer<'a> {
         file,
         ctx,
         texture,
+        name,
       })
     }
   }
 }
 
 impl<'a> Capturer for SharedCapturer<'a> {
+  fn refresh(&mut self) -> Result<()> {
+    unsafe {
+      UnmapViewOfFile(MEMORYMAPPEDVIEW_HANDLE(self.buffer as isize));
+      CloseHandle(self.file);
+    }
+
+    let (texture, desc) = self.ctx.create_readable_texture()?;
+    let buffer_size = (desc.width() * desc.height() * 4) as usize;
+
+    unsafe {
+      let file = CreateFileMappingA(
+        INVALID_HANDLE_VALUE,
+        None,
+        PAGE_READWRITE,
+        0,
+        buffer_size as u32,
+        PCSTR(self.name.as_ptr()),
+      )
+      .unwrap();
+
+      let buffer = MapViewOfFile(
+        file,                // handle to map object
+        FILE_MAP_ALL_ACCESS, // read/write permission
+        0,
+        0,
+        buffer_size,
+      )
+      .unwrap()
+      .0 as *mut u8;
+
+      self.file = file;
+      self.buffer = buffer;
+      self.texture = texture;
+      self.buffer_size = buffer_size;
+    }
+    Ok(())
+  }
+
   fn get_buffer(&self) -> &[u8] {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
