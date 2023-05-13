@@ -88,6 +88,14 @@ impl<'a> Capturer for SharedCapturer<'a> {
     self.ctx.get_desc()
   }
 
+  fn check_buffer(&self) -> Result<()> {
+    if self.buffer_size < calc_buffer_size(self.get_desc()?) {
+      return Err("Invalid buffer length");
+    } else {
+      Ok(())
+    }
+  }
+
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self
       .ctx
@@ -95,11 +103,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    // check buffer length
-    if self.buffer_size < calc_buffer_size(self.get_desc()?) {
-      return Err("Invalid buffer length");
-    }
-
+    self.check_buffer()?;
     self.capture()
   }
 }

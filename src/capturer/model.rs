@@ -9,6 +9,9 @@ pub trait Capturer {
   /// The buffer is in BGRA32 format.
   fn get_buffer(&self) -> &[u8];
 
+  /// Check buffer size.
+  fn check_buffer(&self) -> Result<()>;
+
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the buffer.
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
