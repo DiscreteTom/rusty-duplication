@@ -17,6 +17,7 @@ use windows::{
 
 use crate::utils::Dimension;
 
+/// Stateless.
 pub struct DuplicateContext {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
