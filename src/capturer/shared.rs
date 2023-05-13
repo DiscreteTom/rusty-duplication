@@ -56,7 +56,7 @@ impl<'a> SharedCapturer<'a> {
         buffer_size as u32,
         PCSTR(name.as_ptr()),
       )
-      .unwrap();
+      .map_err(|_| "CreateFileMappingA failed")?;
 
       let buffer = MapViewOfFile(
         file,                // handle to map object
@@ -65,7 +65,7 @@ impl<'a> SharedCapturer<'a> {
         0,
         buffer_size,
       )
-      .unwrap()
+      .map_err(|_| "MapViewOfFile failed")?
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture))
     }
