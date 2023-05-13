@@ -15,7 +15,7 @@ use windows::{
   },
 };
 
-use crate::utils::Dimension;
+use crate::utils::OutputDescExt;
 use crate::utils::Result;
 
 /// Stateless.
