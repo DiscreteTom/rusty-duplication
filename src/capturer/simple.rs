@@ -70,3 +70,35 @@ impl DuplicateContext {
     SimpleCapturer::new(self)
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use std::{thread, time::Duration};
+
+  use crate::{capturer::model::Capturer, manager::Manager, utils::FrameInfoExt};
+
+  #[test]
+  fn simple_capturer() {
+    let manager = Manager::default().unwrap();
+    assert_ne!(manager.contexts.len(), 0);
+
+    let mut capturer = manager.contexts[0].simple_capturer().unwrap();
+
+    // sleep for a while before capture to wait system to update the screen
+    thread::sleep(Duration::from_millis(100));
+
+    let info = capturer.safe_capture().unwrap();
+    assert!(info.is_new_frame());
+
+    let buffer = capturer.buffer();
+    // ensure buffer not all zero
+    let mut all_zero = true;
+    for i in 0..buffer.len() {
+      if buffer[i] != 0 {
+        all_zero = false;
+        break;
+      }
+    }
+    assert!(!all_zero);
+  }
+}
