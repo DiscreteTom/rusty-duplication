@@ -31,6 +31,21 @@ pub struct SharedCapturer<'a> {
 
 impl<'a> SharedCapturer<'a> {
   pub fn new(ctx: &'a DuplicateContext, name: String) -> Result<Self> {
+    let (buffer, buffer_size, file, texture) = Self::allocate(ctx, &name)?;
+    Ok(Self {
+      buffer,
+      buffer_size,
+      file,
+      texture,
+      ctx,
+      name,
+    })
+  }
+
+  fn allocate(
+    ctx: &'a DuplicateContext,
+    name: &String,
+  ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
     let buffer_size = (desc.width() * desc.height() * 4) as usize;
 
@@ -54,55 +69,28 @@ impl<'a> SharedCapturer<'a> {
       )
       .unwrap()
       .0 as *mut u8;
+      Ok((buffer, buffer_size, file, texture))
+    }
+  }
 
-      Ok(Self {
-        buffer,
-        buffer_size,
-        file,
-        ctx,
-        texture,
-        name,
-      })
+  fn free(&self) {
+    unsafe {
+      UnmapViewOfFile(MEMORYMAPPEDVIEW_HANDLE(self.buffer as isize));
+      CloseHandle(self.file);
     }
   }
 }
 
 impl<'a> Capturer for SharedCapturer<'a> {
   fn refresh(&mut self) -> Result<()> {
-    unsafe {
-      UnmapViewOfFile(MEMORYMAPPEDVIEW_HANDLE(self.buffer as isize));
-      CloseHandle(self.file);
-    }
+    self.free();
 
-    let (texture, desc) = self.ctx.create_readable_texture()?;
-    let buffer_size = (desc.width() * desc.height() * 4) as usize;
+    let (buffer, buffer_size, file, texture) = Self::allocate(self.ctx, &self.name)?;
 
-    unsafe {
-      let file = CreateFileMappingA(
-        INVALID_HANDLE_VALUE,
-        None,
-        PAGE_READWRITE,
-        0,
-        buffer_size as u32,
-        PCSTR(self.name.as_ptr()),
-      )
-      .unwrap();
-
-      let buffer = MapViewOfFile(
-        file,                // handle to map object
-        FILE_MAP_ALL_ACCESS, // read/write permission
-        0,
-        0,
-        buffer_size,
-      )
-      .unwrap()
-      .0 as *mut u8;
-
-      self.file = file;
-      self.buffer = buffer;
-      self.texture = texture;
-      self.buffer_size = buffer_size;
-    }
+    self.file = file;
+    self.buffer = buffer;
+    self.texture = texture;
+    self.buffer_size = buffer_size;
     Ok(())
   }
 
@@ -129,9 +117,6 @@ impl DuplicateContext {
 
 impl<'a> Drop for SharedCapturer<'a> {
   fn drop(&mut self) {
-    unsafe {
-      UnmapViewOfFile(MEMORYMAPPEDVIEW_HANDLE(self.buffer as isize));
-      CloseHandle(self.file);
-    }
+    self.free()
   }
 }

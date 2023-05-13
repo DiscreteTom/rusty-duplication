@@ -17,20 +17,24 @@ pub struct SimpleCapturer<'a> {
 
 impl<'a> SimpleCapturer<'a> {
   pub fn new(ctx: &'a DuplicateContext) -> Result<Self> {
-    let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
+    let (buffer, texture) = Self::allocate(ctx)?;
     Ok(Self {
       buffer,
       ctx,
       texture,
     })
   }
+
+  fn allocate(ctx: &'a DuplicateContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
+    let (texture, desc) = ctx.create_readable_texture()?;
+    let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
+    Ok((buffer, texture))
+  }
 }
 
 impl Capturer for SimpleCapturer<'_> {
   fn refresh(&mut self) -> Result<()> {
-    let (texture, desc) = self.ctx.create_readable_texture()?;
-    let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
+    let (buffer, texture) = SimpleCapturer::allocate(self.ctx)?;
     self.buffer = buffer;
     self.texture = texture;
     Ok(())
