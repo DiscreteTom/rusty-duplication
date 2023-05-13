@@ -15,7 +15,7 @@ use windows::Win32::{
 };
 
 use crate::duplicate_context::DuplicateContext;
-use crate::utils::{calc_buffer_size, Result};
+use crate::utils::{OutputDescExt, Result};
 
 use super::model::Capturer;
 
@@ -45,7 +45,7 @@ impl<'a> SharedCapturer<'a> {
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer_size = calc_buffer_size(desc);
+    let buffer_size = desc.calc_buffer_size();
 
     unsafe {
       let file = CreateFileMappingA(
@@ -89,7 +89,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer_size < calc_buffer_size(self.get_desc()?) {
+    if self.buffer_size < self.get_desc()?.calc_buffer_size() {
       return Err("Invalid buffer length");
     } else {
       Ok(())
