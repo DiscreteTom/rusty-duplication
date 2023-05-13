@@ -29,8 +29,8 @@ pub struct SharedCapturer<'a> {
 }
 
 impl<'a> SharedCapturer<'a> {
-  pub fn new(ctx: &'a DuplicateContext, name: String) -> Result<Self> {
-    let (buffer, buffer_size, file, texture) = Self::allocate(ctx, &name)?;
+  pub fn new(ctx: &'a DuplicateContext, name: &str) -> Result<Self> {
+    let (buffer, buffer_size, file, texture) = Self::allocate(ctx, name)?;
     Ok(Self {
       buffer,
       buffer_size,
@@ -42,7 +42,7 @@ impl<'a> SharedCapturer<'a> {
 
   fn allocate(
     ctx: &'a DuplicateContext,
-    name: &String,
+    name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
     let buffer_size = calc_buffer_size(desc);
@@ -109,7 +109,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
 }
 
 impl DuplicateContext {
-  pub fn shared_capturer(&self, name: String) -> Result<SharedCapturer> {
+  pub fn shared_capturer(&self, name: &str) -> Result<SharedCapturer> {
     SharedCapturer::new(self, name)
   }
 }
