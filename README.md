@@ -27,10 +27,10 @@ fn main() {
   // you can also refresh monitor info manually
   // manager.refresh();
 
-  // get monitor info before capturing start
-  for ctx in &manager.contexts {
-    ctx.get_desc().unwrap();
-  }
+  // you can get monitor info before capturing start
+  // for ctx in &manager.contexts {
+  //   ctx.get_desc().unwrap();
+  // }
 
   // create capturer for a display
   // this will allocate memory buffer to store pixel data
@@ -41,7 +41,7 @@ fn main() {
   // we have some extension methods for you such as `width/height`
   println!("size: {}x{}", desc.width(), desc.height());
 
-  // sleep for a while before capture to wait system update
+  // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
 
   // capture desktop image and get the frame info
@@ -54,8 +54,8 @@ fn main() {
   }
 
   // write to a file
-  let mut file = File::create("capture.bin").unwrap();
   // `get_buffer` will return `&[u8]` in BGRA32 format
+  let mut file = File::create("capture.bin").unwrap();
   file.write_all(capturer.get_buffer()).unwrap();
 }
 ```
