@@ -33,16 +33,16 @@ impl<'a> SimpleCapturer<'a> {
 }
 
 impl Capturer for SimpleCapturer<'_> {
-  fn get_buffer(&self) -> &[u8] {
+  fn buffer(&self) -> &[u8] {
     &self.buffer
   }
 
-  fn get_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.get_desc()
+  fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.desc()
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.get_desc()?.calc_buffer_size() {
+    if self.buffer.len() < self.desc()?.calc_buffer_size() {
       Err("Invalid buffer length")
     } else {
       Ok(())

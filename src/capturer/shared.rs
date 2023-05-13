@@ -80,16 +80,16 @@ impl<'a> SharedCapturer<'a> {
 }
 
 impl<'a> Capturer for SharedCapturer<'a> {
-  fn get_buffer(&self) -> &[u8] {
+  fn buffer(&self) -> &[u8] {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
 
-  fn get_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.get_desc()
+  fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.desc()
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer_size < self.get_desc()?.calc_buffer_size() {
+    if self.buffer_size < self.desc()?.calc_buffer_size() {
       return Err("Invalid buffer length");
     } else {
       Ok(())

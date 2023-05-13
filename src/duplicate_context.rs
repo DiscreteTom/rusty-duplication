@@ -44,14 +44,14 @@ impl DuplicateContext {
     }
   }
 
-  pub fn get_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+  pub fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     let mut desc = DXGI_OUTPUT_DESC::default();
     unsafe { self.output.GetDesc(&mut desc) }.map_err(|_| "GetDesc failed")?;
     Ok(desc)
   }
 
   pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTPUT_DESC)> {
-    let desc = self.get_desc()?;
+    let desc = self.desc()?;
 
     // create a readable texture description
     let texture_desc = D3D11_TEXTURE2D_DESC {
