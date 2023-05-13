@@ -10,7 +10,6 @@ use super::model::Capturer;
 
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
-  desc: DXGI_OUTPUT_DESC, // TODO: not needed?
   buffer: Vec<u8>,
   ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
@@ -21,7 +20,6 @@ impl<'a> SimpleCapturer<'a> {
     let (texture, desc) = ctx.create_readable_texture()?;
     let buffer = vec![0u8; (desc.width() * desc.height() * 4) as usize];
     Ok(Self {
-      desc,
       buffer,
       ctx,
       texture,
@@ -34,8 +32,8 @@ impl Capturer for SimpleCapturer<'_> {
     &self.buffer
   }
 
-  fn get_desc(&self) -> DXGI_OUTPUT_DESC {
-    self.desc // TODO: refresh?
+  fn get_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.get_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

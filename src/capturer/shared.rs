@@ -21,7 +21,6 @@ use super::model::Capturer;
 
 /// Capture screen to a chunk of shared memory.
 pub struct SharedCapturer<'a> {
-  desc: DXGI_OUTPUT_DESC,
   buffer: *mut u8,
   buffer_size: usize,
   file: HANDLE,
@@ -56,7 +55,6 @@ impl<'a> SharedCapturer<'a> {
       .0 as *mut u8;
 
       Ok(Self {
-        desc,
         buffer,
         buffer_size,
         file,
@@ -72,8 +70,8 @@ impl<'a> Capturer for SharedCapturer<'a> {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
 
-  fn get_desc(&self) -> DXGI_OUTPUT_DESC {
-    self.desc
+  fn get_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.get_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
