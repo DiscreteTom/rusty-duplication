@@ -84,6 +84,10 @@ impl<'a> Capturer for SharedCapturer<'a> {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
 
+  fn buffer_mut(&mut self) -> &mut [u8] {
+    unsafe { slice::from_raw_parts_mut(self.buffer, self.buffer_size) }
+  }
+
   fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     self.ctx.desc()
   }

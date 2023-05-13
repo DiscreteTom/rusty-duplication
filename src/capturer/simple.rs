@@ -37,6 +37,10 @@ impl Capturer for SimpleCapturer<'_> {
     &self.buffer
   }
 
+  fn buffer_mut(&mut self) -> &mut [u8] {
+    &mut self.buffer
+  }
+
   fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     self.ctx.desc()
   }

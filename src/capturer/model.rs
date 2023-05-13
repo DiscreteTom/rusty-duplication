@@ -9,6 +9,10 @@ pub trait Capturer {
   /// The buffer is in BGRA32 format.
   fn buffer(&self) -> &[u8];
 
+  /// Get the buffer of the last captured frame.
+  /// The buffer is in BGRA32 format.
+  fn buffer_mut(&mut self) -> &mut [u8];
+
   /// Check buffer size.
   fn check_buffer(&self) -> Result<()>;
 
