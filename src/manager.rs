@@ -25,16 +25,17 @@ impl Manager {
     };
     match manager.refresh() {
       Ok(_) => Ok(manager),
-      Err(_) => Err("Failed to acquire output duplication"),
+      Err(e) => Err(e),
     }
   }
 
   /// Refresh monitor info.
-  pub fn refresh(&mut self) -> Result<(), ()> {
+  pub fn refresh(&mut self) -> Result<(), &'static str> {
     self.contexts.clear();
 
     unsafe {
-      let factory = CreateDXGIFactory1::<IDXGIFactory1>().unwrap();
+      let factory =
+        CreateDXGIFactory1::<IDXGIFactory1>().map_err(|_| "CreateDXGIFactory1 failed")?;
       let mut adapter_outputs = Vec::new();
 
       // collect adapters and outputs
@@ -55,7 +56,7 @@ impl Manager {
         }
       }
       if adapter_outputs.len() == 0 {
-        panic!();
+        return Err("No output");
       }
 
       // prepare device and output
@@ -76,14 +77,16 @@ impl Manager {
           Some(&mut feature_level),
           Some(&mut device_context),
         )
-        .unwrap();
+        .map_err(|_| "D3D11CreateDevice failed")?;
         let device = device.unwrap();
         let device_context = device_context.unwrap();
 
         // create duplication output for each output
         for output in outputs {
           let output = output.cast::<IDXGIOutput1>().unwrap();
-          let output_duplication = output.DuplicateOutput(&device).unwrap();
+          let output_duplication = output
+            .DuplicateOutput(&device)
+            .map_err(|_| "DuplicateOutput failed")?;
           self.contexts.push(DuplicateContext::new(
             device.clone(),
             device_context.clone(),
