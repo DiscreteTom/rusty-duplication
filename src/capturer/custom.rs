@@ -9,16 +9,16 @@ use crate::{duplicate_context::DuplicateContext, utils::OutputDescExt};
 use super::model::Capturer;
 
 /// Capture screen to a chunk of memory.
-pub struct CustomCapturer<'ctx, 'buffer: 'ctx> {
-  buffer: &'buffer mut [u8],
-  ctx: &'ctx DuplicateContext,
+pub struct CustomCapturer<'a> {
+  buffer: &'a mut [u8],
+  ctx: &'a DuplicateContext,
   texture: ID3D11Texture2D,
 }
 
-impl<'ctx, 'buffer> CustomCapturer<'ctx, 'buffer> {
+impl<'a> CustomCapturer<'a> {
   pub fn with_texture(
-    ctx: &'ctx DuplicateContext,
-    buffer: &'buffer mut [u8],
+    ctx: &'a DuplicateContext,
+    buffer: &'a mut [u8],
     texture: ID3D11Texture2D,
   ) -> Self {
     Self {
@@ -28,7 +28,7 @@ impl<'ctx, 'buffer> CustomCapturer<'ctx, 'buffer> {
     }
   }
 
-  pub fn new(ctx: &'ctx DuplicateContext, buffer: &'buffer mut [u8]) -> Result<Self> {
+  pub fn new(ctx: &'a DuplicateContext, buffer: &'a mut [u8]) -> Result<Self> {
     Ok(Self::with_texture(
       ctx,
       buffer,
@@ -37,7 +37,7 @@ impl<'ctx, 'buffer> CustomCapturer<'ctx, 'buffer> {
   }
 }
 
-impl Capturer for CustomCapturer<'_, '_> {
+impl Capturer for CustomCapturer<'_> {
   fn buffer(&self) -> &[u8] {
     &self.buffer
   }
@@ -71,10 +71,10 @@ impl Capturer for CustomCapturer<'_, '_> {
 }
 
 impl DuplicateContext {
-  pub fn custom_capturer<'ctx, 'buffer: 'ctx>(
-    &'ctx self,
-    buffer: &'buffer mut [u8],
-  ) -> Result<CustomCapturer> {
-    CustomCapturer::<'ctx, 'buffer>::new(self, buffer)
+  pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer> {
+    CustomCapturer::<'a>::new(self, buffer)
+  }
+}
+
   }
 }
