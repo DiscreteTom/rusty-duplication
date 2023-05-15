@@ -10,7 +10,8 @@ use windows::{
     Dxgi::{
       Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
       IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, IDXGISurface1, DXGI_MAPPED_RECT,
-      DXGI_MAP_READ, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC, DXGI_RESOURCE_PRIORITY_MAXIMUM,
+      DXGI_MAP_READ, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
+      DXGI_RESOURCE_PRIORITY_MAXIMUM,
     },
   },
 };
@@ -132,6 +133,27 @@ impl DuplicateContext {
     }
 
     Ok(info)
+  }
+
+  pub fn get_pointer(
+    &self,
+    info: &DXGI_OUTDUPL_FRAME_INFO,
+  ) -> Result<(Vec<u8>, u32, DXGI_OUTDUPL_POINTER_SHAPE_INFO)> {
+    let mut buffer = vec![0u8; info.PointerShapeBufferSize as usize];
+    let mut size: u32 = 0;
+    let mut shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
+    unsafe {
+      self
+        .output_duplication
+        .GetFramePointerShape(
+          info.PointerShapeBufferSize,
+          buffer.as_mut_ptr() as *mut _,
+          &mut size,
+          &mut shape_info,
+        )
+        .map_err(|e| format!("GetFramePointerShape failed: {:?}", e))?;
+    }
+    return Ok((buffer, size, shape_info));
   }
 }
 

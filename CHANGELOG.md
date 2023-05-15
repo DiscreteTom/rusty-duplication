@@ -6,6 +6,7 @@
 - **_Breaking Change_**: rename `DXGI_OUTDUPL_FRAME_INFO.is_new_frame` to `DXGI_OUTDUPL_FRAME_INFO.desktop_updated`, add `DXGI_OUTDUPL_FRAME_INFO.mouse_updated`.
 - Feat: add `CustomCapturer`.
 - Feat: add `SharedCapturer.open`.
+- Feat: add `DuplicateContext.get_pointer`.
 
 ## v0.2.0
 
