@@ -4,19 +4,19 @@ use windows::Win32::Graphics::{
 };
 
 use crate::utils::Result;
-use crate::{duplicate_context::DuplicateContext, utils::OutputDescExt};
+use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
 
 use super::model::Capturer;
 
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
   buffer: Vec<u8>,
-  ctx: &'a DuplicateContext,
+  ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
 }
 
 impl<'a> SimpleCapturer<'a> {
-  pub fn new(ctx: &'a DuplicateContext) -> Result<Self> {
+  pub fn new(ctx: &'a DuplicationContext) -> Result<Self> {
     let (buffer, texture) = Self::allocate(ctx)?;
     Ok(Self {
       buffer,
@@ -25,7 +25,7 @@ impl<'a> SimpleCapturer<'a> {
     })
   }
 
-  fn allocate(ctx: &'a DuplicateContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
+  fn allocate(ctx: &'a DuplicationContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
     let buffer = vec![0u8; desc.calc_buffer_size()];
     Ok((buffer, texture))
@@ -65,7 +65,7 @@ impl Capturer for SimpleCapturer<'_> {
   }
 }
 
-impl DuplicateContext {
+impl DuplicationContext {
   pub fn simple_capturer(&self) -> Result<SimpleCapturer> {
     SimpleCapturer::new(self)
   }

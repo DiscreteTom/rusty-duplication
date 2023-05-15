@@ -1,5 +1,5 @@
 use super::model::Capturer;
-use crate::duplicate_context::DuplicateContext;
+use crate::duplication_context::DuplicationContext;
 use crate::utils::{OutputDescExt, Result};
 use std::slice;
 use windows::core::PCSTR;
@@ -22,12 +22,12 @@ pub struct SharedCapturer<'a> {
   buffer: *mut u8,
   buffer_size: usize,
   file: HANDLE,
-  ctx: &'a DuplicateContext,
+  ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
 }
 
 impl<'a> SharedCapturer<'a> {
-  pub fn new(ctx: &'a DuplicateContext, name: &str) -> Result<Self> {
+  pub fn new(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture) = Self::allocate(ctx, name)?;
     Ok(Self {
       buffer,
@@ -38,7 +38,7 @@ impl<'a> SharedCapturer<'a> {
     })
   }
 
-  pub fn open(ctx: &'a DuplicateContext, name: &str) -> Result<Self> {
+  pub fn open(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture) = Self::open_file(ctx, name)?;
     Ok(Self {
       buffer,
@@ -50,7 +50,7 @@ impl<'a> SharedCapturer<'a> {
   }
 
   fn allocate(
-    ctx: &'a DuplicateContext,
+    ctx: &'a DuplicationContext,
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
@@ -81,7 +81,7 @@ impl<'a> SharedCapturer<'a> {
   }
 
   fn open_file(
-    ctx: &'a DuplicateContext,
+    ctx: &'a DuplicationContext,
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
@@ -145,7 +145,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 }
 
-impl DuplicateContext {
+impl DuplicationContext {
   pub fn shared_capturer(&self, name: &str) -> Result<SharedCapturer> {
     SharedCapturer::new(self, name)
   }

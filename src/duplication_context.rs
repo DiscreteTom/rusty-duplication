@@ -20,7 +20,7 @@ use crate::utils::OutputDescExt;
 use crate::utils::Result;
 
 /// Stateless.
-pub struct DuplicateContext {
+pub struct DuplicationContext {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
   timeout_ms: u32,
@@ -28,7 +28,7 @@ pub struct DuplicateContext {
   output_duplication: IDXGIOutputDuplication,
 }
 
-impl DuplicateContext {
+impl DuplicationContext {
   pub fn new(
     device: ID3D11Device,
     device_context: ID3D11DeviceContext,
@@ -167,7 +167,7 @@ mod tests {
   };
 
   #[test]
-  fn duplicate_context() {
+  fn duplication_context() {
     let manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);
 

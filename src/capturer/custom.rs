@@ -4,20 +4,20 @@ use windows::Win32::Graphics::{
 };
 
 use crate::utils::Result;
-use crate::{duplicate_context::DuplicateContext, utils::OutputDescExt};
+use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
 
 use super::model::Capturer;
 
 /// Capture screen to a chunk of memory.
 pub struct CustomCapturer<'a> {
   buffer: &'a mut [u8],
-  ctx: &'a DuplicateContext,
+  ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
 }
 
 impl<'a> CustomCapturer<'a> {
   pub fn with_texture(
-    ctx: &'a DuplicateContext,
+    ctx: &'a DuplicationContext,
     buffer: &'a mut [u8],
     texture: ID3D11Texture2D,
   ) -> Self {
@@ -28,7 +28,7 @@ impl<'a> CustomCapturer<'a> {
     }
   }
 
-  pub fn new(ctx: &'a DuplicateContext, buffer: &'a mut [u8]) -> Result<Self> {
+  pub fn new(ctx: &'a DuplicationContext, buffer: &'a mut [u8]) -> Result<Self> {
     Ok(Self::with_texture(
       ctx,
       buffer,
@@ -70,7 +70,7 @@ impl Capturer for CustomCapturer<'_> {
   }
 }
 
-impl DuplicateContext {
+impl DuplicationContext {
   pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer> {
     CustomCapturer::<'a>::new(self, buffer)
   }

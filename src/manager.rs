@@ -1,4 +1,4 @@
-use crate::duplicate_context::DuplicateContext;
+use crate::duplication_context::DuplicationContext;
 use crate::utils::Result;
 use windows::core::ComInterface;
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_9_1};
@@ -8,7 +8,7 @@ use windows::Win32::Graphics::Direct3D11::{
 use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1, IDXGIOutput1};
 
 pub struct Manager {
-  pub contexts: Vec<DuplicateContext>,
+  pub contexts: Vec<DuplicationContext>,
   timeout_ms: u32,
 }
 
@@ -88,7 +88,7 @@ impl Manager {
         let output = output.cast::<IDXGIOutput1>().unwrap();
         let output_duplication = unsafe { output.DuplicateOutput(&device) }
           .map_err(|e| format!("DuplicateOutput failed: {:?}", e))?;
-        self.contexts.push(DuplicateContext::new(
+        self.contexts.push(DuplicationContext::new(
           device.clone(),
           device_context.clone(),
           output,
