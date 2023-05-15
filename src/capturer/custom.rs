@@ -16,18 +16,24 @@ pub struct CustomCapturer<'ctx, 'buffer: 'ctx> {
 }
 
 impl<'ctx, 'buffer> CustomCapturer<'ctx, 'buffer> {
-  pub fn new(ctx: &'ctx DuplicateContext, buffer: &'buffer mut [u8]) -> Result<Self> {
-    let texture = Self::allocate(ctx)?;
-    Ok(Self {
+  pub fn with_texture(
+    ctx: &'ctx DuplicateContext,
+    buffer: &'buffer mut [u8],
+    texture: ID3D11Texture2D,
+  ) -> Self {
+    Self {
       buffer,
       ctx,
       texture,
-    })
+    }
   }
 
-  fn allocate(ctx: &'ctx DuplicateContext) -> Result<ID3D11Texture2D> {
-    let (texture, _) = ctx.create_readable_texture()?;
-    Ok(texture)
+  pub fn new(ctx: &'ctx DuplicateContext, buffer: &'buffer mut [u8]) -> Result<Self> {
+    Ok(Self::with_texture(
+      ctx,
+      buffer,
+      ctx.create_readable_texture()?.0,
+    ))
   }
 }
 
