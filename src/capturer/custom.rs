@@ -100,7 +100,7 @@ mod tests {
     thread::sleep(Duration::from_millis(100));
 
     let info = capturer.safe_capture().unwrap();
-    assert!(info.is_new_frame());
+    assert!(info.desktop_updated());
 
     let buffer = capturer.buffer();
     // ensure buffer not all zero

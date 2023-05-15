@@ -3,6 +3,7 @@
 ## v0.3.0
 
 - **_Breaking Change_**: error type changed from `&static str` to `String`.
+- **_Breaking Change_**: rename `DXGI_OUTDUPL_FRAME_INFO.is_new_frame` to `DXGI_OUTDUPL_FRAME_INFO.desktop_updated`, add `DXGI_OUTDUPL_FRAME_INFO.mouse_updated`.
 - Feat: add `CustomCapturer`.
 - Feat: add `SharedCapturer.open`.
 

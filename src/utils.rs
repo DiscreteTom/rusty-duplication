@@ -24,12 +24,17 @@ impl OutputDescExt for DXGI_OUTPUT_DESC {
 }
 
 pub trait FrameInfoExt {
-  fn is_new_frame(&self) -> bool;
+  fn desktop_updated(&self) -> bool;
+  fn mouse_updated(&self) -> bool;
 }
 
 impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
-  fn is_new_frame(&self) -> bool {
+  fn desktop_updated(&self) -> bool {
     self.LastPresentTime > 0
+  }
+
+  fn mouse_updated(&self) -> bool {
+    self.LastMouseUpdateTime == 0
   }
 }
 
@@ -54,8 +59,8 @@ mod tests {
   #[test]
   fn frame_info_ext() {
     let mut desc = DXGI_OUTDUPL_FRAME_INFO::default();
-    assert!(!desc.is_new_frame());
+    assert!(!desc.desktop_updated());
     desc.LastPresentTime = 1;
-    assert!(desc.is_new_frame());
+    assert!(desc.desktop_updated());
   }
 }

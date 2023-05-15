@@ -158,7 +158,7 @@ mod tests {
     let info = manager.contexts[0]
       .capture_frame(buffer.as_mut_ptr(), buffer.len(), &texture)
       .unwrap();
-    assert!(info.is_new_frame());
+    assert!(info.desktop_updated());
 
     // ensure buffer not all zero
     let mut all_zero = true;
