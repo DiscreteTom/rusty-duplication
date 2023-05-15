@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.2.1
+
+- Feat: add `CustomCapturer`.
+
 ## v0.2.0
 
 - **_Breaking Change_**: move `calc_buffer_size` into trait `OutputDescExt`.
