@@ -1,7 +1,8 @@
 # CHANGELOG
 
-## v0.2.1
+## v0.3.0
 
+- **_Breaking Change_**: error type changed from `&static str` to `String`.
 - Feat: add `CustomCapturer`.
 
 ## v0.2.0

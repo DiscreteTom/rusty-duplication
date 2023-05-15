@@ -56,7 +56,7 @@ impl<'a> SharedCapturer<'a> {
         buffer_size as u32,
         PCSTR(name.as_ptr()),
       )
-      .map_err(|_| "CreateFileMappingA failed")?;
+      .map_err(|e| format!("CreateFileMappingA failed: {:?}", e))?;
 
       let buffer = MapViewOfFile(
         file,                // handle to map object
@@ -65,7 +65,7 @@ impl<'a> SharedCapturer<'a> {
         0,
         buffer_size,
       )
-      .map_err(|_| "MapViewOfFile failed")?
+      .map_err(|e| format!("MapViewOfFile failed: {:?}", e))?
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture))
     }
@@ -94,7 +94,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
 
   fn check_buffer(&self) -> Result<()> {
     if self.buffer_size < self.desc()?.calc_buffer_size() {
-      return Err("Invalid buffer length");
+      return Err("Invalid buffer length".into());
     } else {
       Ok(())
     }

@@ -52,7 +52,7 @@ impl Capturer for CustomCapturer<'_> {
 
   fn check_buffer(&self) -> Result<()> {
     if self.buffer.len() < self.desc()?.calc_buffer_size() {
-      Err("Invalid buffer length")
+      Err("Invalid buffer length".into())
     } else {
       Ok(())
     }

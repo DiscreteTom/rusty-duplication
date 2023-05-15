@@ -46,7 +46,7 @@ impl DuplicateContext {
 
   pub fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     let mut desc = DXGI_OUTPUT_DESC::default();
-    unsafe { self.output.GetDesc(&mut desc) }.map_err(|_| "GetDesc failed")?;
+    unsafe { self.output.GetDesc(&mut desc) }.map_err(|e| format!("GetDesc failed: {:?}", e))?;
     Ok(desc)
   }
 
@@ -77,7 +77,7 @@ impl DuplicateContext {
         .device
         .CreateTexture2D(&texture_desc, None, Some(&mut readable_texture))
     }
-    .map_err(|_| "CreateTexture2D failed")?;
+    .map_err(|e| format!("CreateTexture2D failed: {:?}", e))?;
     let readable_texture = readable_texture.unwrap();
     // Lower priorities causes stuff to be needlessly copied from gpu to ram,
     // causing huge ram usage on some systems.
@@ -99,14 +99,15 @@ impl DuplicateContext {
         .output_duplication
         .AcquireNextFrame(self.timeout_ms, &mut frame_info, &mut resource)
     }
-    .map_err(|_| "AcquireNextFrame failed")?;
+    .map_err(|e| format!("AcquireNextFrame failed: {:?}", e))?;
     let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy GPU texture to readable texture
     unsafe { self.device_context.CopyResource(readable_texture, &texture) };
 
     // release GPU texture
-    unsafe { self.output_duplication.ReleaseFrame() }.map_err(|_| "ReleaseFrame failed")?;
+    unsafe { self.output_duplication.ReleaseFrame() }
+      .map_err(|e| format!("ReleaseFrame failed: {:?}", e))?;
 
     Ok((readable_texture.cast().unwrap(), frame_info))
   }
@@ -123,9 +124,11 @@ impl DuplicateContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(|_| "Map failed")?;
+        .map_err(|e| format!("Map failed: {:?}", e))?;
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-      frame.Unmap().map_err(|_| "Unmap failed")?;
+      frame
+        .Unmap()
+        .map_err(|e| format!("Unmap failed: {:?}", e))?;
     }
 
     Ok(info)

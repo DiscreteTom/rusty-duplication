@@ -34,8 +34,8 @@ impl Manager {
   pub fn refresh(&mut self) -> Result<()> {
     self.contexts.clear();
 
-    let factory =
-      unsafe { CreateDXGIFactory1::<IDXGIFactory1>() }.map_err(|_| "CreateDXGIFactory1 failed")?;
+    let factory = unsafe { CreateDXGIFactory1::<IDXGIFactory1>() }
+      .map_err(|e| format!("CreateDXGIFactory1 failed: {:?}", e))?;
     let mut adapter_outputs = Vec::new();
 
     // collect adapters and outputs
@@ -56,7 +56,7 @@ impl Manager {
       }
     }
     if adapter_outputs.len() == 0 {
-      return Err("No output");
+      return Err("No output".into());
     }
 
     // prepare device and output
@@ -79,15 +79,15 @@ impl Manager {
           Some(&mut device_context),
         )
       }
-      .map_err(|_| "D3D11CreateDevice failed")?;
+      .map_err(|e| format!("D3D11CreateDevice failed: {:?}", e))?;
       let device = device.unwrap();
       let device_context = device_context.unwrap();
 
       // create duplication output for each output
       for output in outputs {
         let output = output.cast::<IDXGIOutput1>().unwrap();
-        let output_duplication =
-          unsafe { output.DuplicateOutput(&device) }.map_err(|_| "DuplicateOutput failed")?;
+        let output_duplication = unsafe { output.DuplicateOutput(&device) }
+          .map_err(|e| format!("DuplicateOutput failed: {:?}", e))?;
         self.contexts.push(DuplicateContext::new(
           device.clone(),
           device_context.clone(),
