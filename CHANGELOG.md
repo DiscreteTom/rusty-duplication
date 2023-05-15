@@ -4,6 +4,7 @@
 
 - **_Breaking Change_**: error type changed from `&static str` to `String`.
 - Feat: add `CustomCapturer`.
+- Feat: add `SharedCapturer.open`.
 
 ## v0.2.0
 

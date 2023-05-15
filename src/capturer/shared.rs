@@ -1,9 +1,12 @@
+use super::model::Capturer;
+use crate::duplicate_context::DuplicateContext;
+use crate::utils::{OutputDescExt, Result};
 use std::slice;
-
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
 use windows::Win32::System::Memory::{
-  CreateFileMappingA, MapViewOfFile, UnmapViewOfFile, FILE_MAP_ALL_ACCESS, MEMORYMAPPEDVIEW_HANDLE,
+  CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
+  MEMORYMAPPEDVIEW_HANDLE,
 };
 use windows::Win32::{
   Foundation::INVALID_HANDLE_VALUE,
@@ -13,11 +16,6 @@ use windows::Win32::{
   },
   System::Memory::PAGE_READWRITE,
 };
-
-use crate::duplicate_context::DuplicateContext;
-use crate::utils::{OutputDescExt, Result};
-
-use super::model::Capturer;
 
 /// Capture screen to a chunk of shared memory.
 pub struct SharedCapturer<'a> {
@@ -31,6 +29,17 @@ pub struct SharedCapturer<'a> {
 impl<'a> SharedCapturer<'a> {
   pub fn new(ctx: &'a DuplicateContext, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture) = Self::allocate(ctx, name)?;
+    Ok(Self {
+      buffer,
+      buffer_size,
+      file,
+      texture,
+      ctx,
+    })
+  }
+
+  pub fn open(ctx: &'a DuplicateContext, name: &str) -> Result<Self> {
+    let (buffer, buffer_size, file, texture) = Self::open_file(ctx, name)?;
     Ok(Self {
       buffer,
       buffer_size,
@@ -57,6 +66,30 @@ impl<'a> SharedCapturer<'a> {
         PCSTR(name.as_ptr()),
       )
       .map_err(|e| format!("CreateFileMappingA failed: {:?}", e))?;
+
+      let buffer = MapViewOfFile(
+        file,                // handle to map object
+        FILE_MAP_ALL_ACCESS, // read/write permission
+        0,
+        0,
+        buffer_size,
+      )
+      .map_err(|e| format!("MapViewOfFile failed: {:?}", e))?
+      .0 as *mut u8;
+      Ok((buffer, buffer_size, file, texture))
+    }
+  }
+
+  fn open_file(
+    ctx: &'a DuplicateContext,
+    name: &str,
+  ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
+    let (texture, desc) = ctx.create_readable_texture()?;
+    let buffer_size = desc.calc_buffer_size();
+
+    unsafe {
+      let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
+        .map_err(|e| format!("CreateFileMappingA failed: {:?}", e))?;
 
       let buffer = MapViewOfFile(
         file,                // handle to map object
@@ -115,6 +148,10 @@ impl<'a> Capturer for SharedCapturer<'a> {
 impl DuplicateContext {
   pub fn shared_capturer(&self, name: &str) -> Result<SharedCapturer> {
     SharedCapturer::new(self, name)
+  }
+
+  pub fn shared_capturer_open(&self, name: &str) -> Result<SharedCapturer> {
+    SharedCapturer::open(self, name)
   }
 }
 
