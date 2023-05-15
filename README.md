@@ -73,6 +73,8 @@ This lib provides a `SharedCapturer` which will use Windows shared memory to sto
 manager.contexts[0].shared_capturer("Global\\MyFileMappingObject").unwrap();
 ```
 
+> **Note**: if your memory name starts with `Global\\`, you may need to run this in administrator mode. See the [doc](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga).
+
 ### Customized Capturer
 
 This lib provides low-level APIs like [`DuplicateContext`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/duplicate_context.rs), so you can write your own capturer. You can refer to [`SimpleCapturer`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/capturer/simple.rs)'s implementation.
