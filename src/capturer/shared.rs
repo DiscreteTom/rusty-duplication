@@ -4,6 +4,7 @@ use crate::utils::{OutputDescExt, Result};
 use std::slice;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
+use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::System::Memory::{
   CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
   MEMORYMAPPEDVIEW_HANDLE,
@@ -137,6 +138,13 @@ impl<'a> Capturer for SharedCapturer<'a> {
     self
       .ctx
       .capture_frame(self.buffer, self.buffer_size, &self.texture)
+  }
+
+  fn get_pointer(
+    &self,
+    frame_info: &DXGI_OUTDUPL_FRAME_INFO,
+  ) -> Result<(Vec<u8>, u32, DXGI_OUTDUPL_POINTER_SHAPE_INFO)> {
+    self.ctx.get_pointer(&frame_info)
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

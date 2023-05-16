@@ -1,5 +1,7 @@
 use crate::utils::Result;
-use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC};
+use windows::Win32::Graphics::Dxgi::{
+  DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
+};
 
 /// Capturer is stateful, it holds a buffer of the last captured frame.
 pub trait Capturer {
@@ -19,6 +21,11 @@ pub trait Capturer {
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the buffer.
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+
+  fn get_pointer(
+    &self,
+    info: &DXGI_OUTDUPL_FRAME_INFO,
+  ) -> Result<(Vec<u8>, u32, DXGI_OUTDUPL_POINTER_SHAPE_INFO)>;
 
   /// Check buffer size before capture.
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;

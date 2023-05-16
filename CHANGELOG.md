@@ -7,7 +7,7 @@
 - **_Breaking Change_**: rename `DuplicateContext` to `DuplicationContext`.
 - Feat: add `CustomCapturer`.
 - Feat: add `SharedCapturer.open`.
-- Feat: add `DuplicationContext.get_pointer`.
+- Feat: add `DuplicationContext/Capturer.get_pointer`.
 
 ## v0.2.0
 
