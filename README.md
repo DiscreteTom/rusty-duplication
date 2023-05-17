@@ -49,8 +49,8 @@ fn main() {
   // `safe_capture` will check if the buffer's size is enough
   let info = capturer.safe_capture().unwrap();
 
-  // check if this is a new frame using the extension method `is_new_frame`
-  if info.is_new_frame() {
+  // check if this is a new frame using the extension method `desktop_updated`
+  if info.desktop_updated() {
     println!("captured!");
   }
 
