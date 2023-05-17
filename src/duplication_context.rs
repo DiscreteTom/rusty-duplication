@@ -16,8 +16,8 @@ use windows::{
   },
 };
 
+use crate::model::Result;
 use crate::utils::OutputDescExt;
-use crate::utils::Result;
 
 /// Stateless.
 pub struct DuplicationContext {

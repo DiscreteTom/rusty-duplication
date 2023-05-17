@@ -1,6 +1,7 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::utils::{OutputDescExt, Result};
+use crate::model::Result;
+use crate::utils::OutputDescExt;
 use std::slice;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};

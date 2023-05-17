@@ -1,7 +1,4 @@
-use std::result;
 use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC};
-
-pub type Result<T> = result::Result<T, String>;
 
 pub trait OutputDescExt {
   fn width(&self) -> u32;
