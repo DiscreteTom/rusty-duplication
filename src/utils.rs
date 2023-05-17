@@ -30,6 +30,7 @@ impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
     self.LastPresentTime > 0
   }
 
+  /// Return true if mouse's shape or/and position is updated.
   fn mouse_updated(&self) -> bool {
     self.LastMouseUpdateTime == 0
   }
