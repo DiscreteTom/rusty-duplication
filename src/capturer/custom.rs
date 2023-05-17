@@ -1,12 +1,10 @@
+use super::model::Capturer;
+use crate::model::{PointerShape, Result};
+use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
 use windows::Win32::Graphics::{
   Direct3D11::ID3D11Texture2D,
-  Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC},
+  Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
 };
-
-use crate::model::Result;
-use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
-
-use super::model::Capturer;
 
 /// Capture screen to a chunk of memory.
 pub struct CustomCapturer<'a> {
@@ -64,11 +62,8 @@ impl Capturer for CustomCapturer<'_> {
       .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
   }
 
-  fn get_pointer(
-    &self,
-    frame_info: &DXGI_OUTDUPL_FRAME_INFO,
-  ) -> Result<(Vec<u8>, u32, DXGI_OUTDUPL_POINTER_SHAPE_INFO)> {
-    self.ctx.get_pointer(&frame_info)
+  fn get_pointer_shape(&self, frame_info: &DXGI_OUTDUPL_FRAME_INFO) -> Result<PointerShape> {
+    self.ctx.get_pointer_shape(&frame_info)
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

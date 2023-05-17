@@ -3,6 +3,7 @@
 ## v0.4.0
 
 - **_Breaking Change_**: move `Result` to `model` module.
+- **_Breaking Change_**: remove `get_pointer`, add `get_pointer_shape`.
 
 ## v0.3.0
 

@@ -1,5 +1,6 @@
+use crate::model::{PointerShape, Result};
+use crate::utils::OutputDescExt;
 use std::ptr;
-
 use windows::{
   core::ComInterface,
   Win32::Graphics::{
@@ -15,9 +16,6 @@ use windows::{
     },
   },
 };
-
-use crate::model::Result;
-use crate::utils::OutputDescExt;
 
 /// Stateless.
 pub struct DuplicationContext {
@@ -135,11 +133,8 @@ impl DuplicationContext {
     Ok(info)
   }
 
-  pub fn get_pointer(
-    &self,
-    info: &DXGI_OUTDUPL_FRAME_INFO,
-  ) -> Result<(Vec<u8>, u32, DXGI_OUTDUPL_POINTER_SHAPE_INFO)> {
-    let mut buffer = vec![0u8; info.PointerShapeBufferSize as usize];
+  pub fn get_pointer_shape(&self, info: &DXGI_OUTDUPL_FRAME_INFO) -> Result<PointerShape> {
+    let mut buffer = vec![0u8; info.PointerShapeBufferSize as usize]; // TODO: cache the buffer?
     let mut size: u32 = 0;
     let mut shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
     unsafe {
@@ -153,7 +148,10 @@ impl DuplicationContext {
         )
         .map_err(|e| format!("GetFramePointerShape failed: {:?}", e))?;
     }
-    return Ok((buffer, size, shape_info));
+    return Ok(PointerShape {
+      info: shape_info,
+      data: buffer,
+    });
   }
 }
 
