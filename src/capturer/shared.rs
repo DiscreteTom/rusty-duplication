@@ -147,6 +147,13 @@ impl<'a> Capturer for SharedCapturer<'a> {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
   }
 
+  fn pointer_shape_updated(&self) -> bool {
+    self.pointer_shape_buffer_size != self.last_pointer_shape_buffer_size || {
+      let len = self.pointer_shape_buffer_size;
+      self.pointer_shape_buffer[..len] != self.last_pointer_shape_buffer[..len]
+    }
+  }
+
   fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     self.ctx.desc()
   }
