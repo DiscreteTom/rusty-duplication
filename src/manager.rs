@@ -13,12 +13,12 @@ pub struct Manager {
 }
 
 impl Manager {
-  /// Create a new manager and refresh monitor info.
+  /// Create a new manager and refresh monitors info.
   pub fn default() -> Result<Manager> {
     Manager::new(300)
   }
 
-  /// Create a new manager and refresh monitor info.
+  /// Create a new manager and refresh monitors info.
   pub fn new(timeout_ms: u32) -> Result<Manager> {
     let mut manager = Manager {
       contexts: Vec::new(),
@@ -30,7 +30,7 @@ impl Manager {
     }
   }
 
-  /// Refresh monitor info.
+  /// Refresh monitors info.
   pub fn refresh(&mut self) -> Result<()> {
     self.contexts.clear();
 
