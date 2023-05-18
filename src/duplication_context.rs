@@ -1,5 +1,5 @@
-use crate::model::{PointerShape, Result};
 use crate::utils::OutputDescExt;
+use crate::{model::Result, utils::FrameInfoExt};
 use std::ptr;
 use windows::{
   core::ComInterface,
@@ -86,7 +86,7 @@ impl DuplicationContext {
     Ok((readable_texture, desc))
   }
 
-  pub fn acquire_next_frame(
+  fn acquire_next_frame(
     &self,
     readable_texture: &ID3D11Texture2D,
   ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
@@ -104,11 +104,62 @@ impl DuplicationContext {
     // copy GPU texture to readable texture
     unsafe { self.device_context.CopyResource(readable_texture, &texture) };
 
-    // release GPU texture
-    unsafe { self.output_duplication.ReleaseFrame() }
-      .map_err(|e| format!("ReleaseFrame failed: {:?}", e))?;
-
     Ok((readable_texture.cast().unwrap(), frame_info))
+  }
+
+  fn release_frame(&self) -> Result<()> {
+    unsafe { self.output_duplication.ReleaseFrame() }
+      .map_err(|e| format!("ReleaseFrame failed: {:?}", e))
+  }
+
+  pub fn next_frame(
+    &self,
+    readable_texture: &ID3D11Texture2D,
+  ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
+    let (surface, frame_info) = self.acquire_next_frame(readable_texture)?;
+    self.release_frame()?;
+    Ok((surface, frame_info))
+  }
+
+  pub fn next_frame_with_pointer_shape(
+    &self,
+    readable_texture: &ID3D11Texture2D,
+    pointer_shape_buffer: &mut Vec<u8>,
+  ) -> Result<(
+    IDXGISurface1,
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )> {
+    let (surface, frame_info) = self.acquire_next_frame(readable_texture)?;
+
+    if !frame_info.mouse_updated() {
+      return Ok((surface, frame_info, None));
+    }
+
+    // resize buffer if needed
+    let pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
+    if pointer_shape_buffer.len() < pointer_shape_buffer_size {
+      pointer_shape_buffer.resize(pointer_shape_buffer_size, 0);
+    }
+
+    // get pointer shape
+    let mut size: u32 = 0;
+    let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
+    unsafe {
+      self
+        .output_duplication
+        .GetFramePointerShape(
+          pointer_shape_buffer.len() as u32,
+          pointer_shape_buffer.as_mut_ptr() as *mut _,
+          &mut size,
+          &mut pointer_shape_info,
+        )
+        .map_err(|e| format!("GetFramePointerShape failed: {:?}", e))?;
+    }
+
+    self.release_frame()?;
+
+    Ok((surface, frame_info, Some(pointer_shape_info)))
   }
 
   pub fn capture_frame(
@@ -117,7 +168,7 @@ impl DuplicationContext {
     len: usize,
     readable_texture: &ID3D11Texture2D,
   ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let (frame, info) = self.acquire_next_frame(readable_texture)?;
+    let (frame, frame_info) = self.next_frame(readable_texture)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
 
     unsafe {
@@ -130,28 +181,34 @@ impl DuplicationContext {
         .map_err(|e| format!("Unmap failed: {:?}", e))?;
     }
 
-    Ok(info)
+    Ok(frame_info)
   }
 
-  pub fn get_pointer_shape(&self, info: &DXGI_OUTDUPL_FRAME_INFO) -> Result<PointerShape> {
-    let mut buffer = vec![0u8; info.PointerShapeBufferSize as usize]; // TODO: cache the buffer?
-    let mut size: u32 = 0;
-    let mut shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
+  pub fn capture_frame_with_pointer_shape(
+    &self,
+    dest: *mut u8,
+    len: usize,
+    readable_texture: &ID3D11Texture2D,
+    pointer_shape_buffer: &mut Vec<u8>,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )> {
+    let (frame, frame_info, pointer_shape_info) =
+      self.next_frame_with_pointer_shape(readable_texture, pointer_shape_buffer)?;
+    let mut mapped_surface = DXGI_MAPPED_RECT::default();
+
     unsafe {
-      self
-        .output_duplication
-        .GetFramePointerShape(
-          info.PointerShapeBufferSize,
-          buffer.as_mut_ptr() as *mut _,
-          &mut size,
-          &mut shape_info,
-        )
-        .map_err(|e| format!("GetFramePointerShape failed: {:?}", e))?;
+      frame
+        .Map(&mut mapped_surface, DXGI_MAP_READ)
+        .map_err(|e| format!("Map failed: {:?}", e))?;
+      ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
+      frame
+        .Unmap()
+        .map_err(|e| format!("Unmap failed: {:?}", e))?;
     }
-    return Ok(PointerShape {
-      info: shape_info,
-      data: buffer,
-    });
+
+    Ok((frame_info, pointer_shape_info))
   }
 }
 
@@ -184,6 +241,27 @@ mod tests {
     let mut all_zero = true;
     for i in 0..buffer.len() {
       if buffer[i] != 0 {
+        all_zero = false;
+        break;
+      }
+    }
+    assert!(!all_zero);
+
+    // check pointer
+    let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
+    manager.contexts[0]
+      .capture_frame_with_pointer_shape(
+        buffer.as_mut_ptr(),
+        buffer.len(),
+        &texture,
+        &mut pointer_shape_buffer,
+      )
+      .unwrap();
+
+    // ensure pointer_shape_buffer not all zero
+    let mut all_zero = true;
+    for i in 0..pointer_shape_buffer.len() {
+      if pointer_shape_buffer[i] != 0 {
         all_zero = false;
         break;
       }
