@@ -121,6 +121,8 @@ impl DuplicationContext {
     Ok((surface, frame_info))
   }
 
+  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
+  /// and this will resize `pointer_shape_buffer` if needed and update it.
   pub fn next_frame_with_pointer_shape(
     &self,
     readable_texture: &ID3D11Texture2D,
@@ -184,6 +186,8 @@ impl DuplicationContext {
     Ok(frame_info)
   }
 
+  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
+  /// and this will resize `pointer_shape_buffer` if needed and update it.
   pub fn capture_frame_with_pointer_shape(
     &self,
     dest: *mut u8,
