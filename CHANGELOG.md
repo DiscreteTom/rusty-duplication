@@ -9,6 +9,7 @@
 - **_Breaking Change_**: rename `DuplicationContext.capture_frame` to `DuplicationContext.capture`.
 - **_Breaking Change_**: rename `desc` to `dxgi_output_desc`.
 - Feat: add `Capturer.pointer_shape_updated`.
+- Feat: add `DuplicationContext.dpi`.
 
 ## v0.3.0
 

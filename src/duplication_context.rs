@@ -1,6 +1,7 @@
 use crate::utils::OutputDescExt;
 use crate::{model::Result, utils::FrameInfoExt};
 use std::ptr;
+use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_RAW_DPI};
 use windows::{
   core::ComInterface,
   Win32::Graphics::{
@@ -47,6 +48,16 @@ impl DuplicationContext {
     let mut desc = DXGI_OUTPUT_DESC::default();
     unsafe { self.output.GetDesc(&mut desc) }.map_err(|e| format!("GetDesc failed: {:?}", e))?;
     Ok(desc)
+  }
+
+  pub fn dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
+    let mut dpi_x = 0;
+    let mut dpi_y = 0;
+    unsafe {
+      GetDpiForMonitor(desc.Monitor, MDT_RAW_DPI, &mut dpi_x, &mut dpi_y)
+        .map_err(|e| format!("GetDpiForMonitor failed: {:?}", e))?;
+    }
+    Ok((dpi_x, dpi_y))
   }
 
   pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTPUT_DESC)> {
