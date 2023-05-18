@@ -80,7 +80,7 @@ impl Capturer for CustomCapturer<'_> {
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self
       .ctx
-      .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
+      .capture(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -94,7 +94,7 @@ impl Capturer for CustomCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = self.ctx.capture_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.ctx.capture_with_pointer_shape(
       self.buffer.as_mut_ptr(),
       self.buffer.len(),
       &self.texture,

@@ -164,8 +164,7 @@ impl DuplicationContext {
     Ok((surface, frame_info, Some(pointer_shape_info)))
   }
 
-  // TODO: rename to capture
-  pub fn capture_frame(
+  pub fn capture(
     &self,
     dest: *mut u8,
     len: usize,
@@ -189,7 +188,7 @@ impl DuplicationContext {
 
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
   /// and this will resize `pointer_shape_buffer` if needed and update it.
-  pub fn capture_frame_with_pointer_shape(
+  pub fn capture_with_pointer_shape(
     &self,
     dest: *mut u8,
     len: usize,
@@ -238,7 +237,7 @@ mod tests {
     thread::sleep(Duration::from_millis(100));
 
     let info = manager.contexts[0]
-      .capture_frame(buffer.as_mut_ptr(), buffer.len(), &texture)
+      .capture(buffer.as_mut_ptr(), buffer.len(), &texture)
       .unwrap();
     assert!(info.desktop_updated());
 
@@ -258,7 +257,7 @@ mod tests {
     // check pointer
     let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
     let (frame_info, pointer_shape_info) = manager.contexts[0]
-      .capture_frame_with_pointer_shape(
+      .capture_with_pointer_shape(
         buffer.as_mut_ptr(),
         buffer.len(),
         &texture,

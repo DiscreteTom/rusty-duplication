@@ -161,7 +161,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self
       .ctx
-      .capture_frame(self.buffer, self.buffer_size, &self.texture)
+      .capture(self.buffer, self.buffer_size, &self.texture)
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -175,7 +175,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = self.ctx.capture_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.ctx.capture_with_pointer_shape(
       self.buffer,
       self.buffer_size,
       &self.texture,
