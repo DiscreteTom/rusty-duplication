@@ -55,7 +55,7 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.desc()?.calc_buffer_size() {
+    if self.buffer.len() < self.dxgi_output_desc()?.calc_buffer_size() {
       Err("Invalid buffer length".into())
     } else {
       Ok(())
@@ -73,8 +73,8 @@ impl Capturer for CustomCapturer<'_> {
     }
   }
 
-  fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.desc()
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.dxgi_output_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -153,7 +153,7 @@ mod tests {
     assert_ne!(manager.contexts.len(), 0);
 
     let ctx = &manager.contexts[0];
-    let desc = ctx.desc().unwrap();
+    let desc = ctx.dxgi_output_desc().unwrap();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
 

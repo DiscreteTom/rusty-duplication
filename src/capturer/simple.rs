@@ -47,7 +47,7 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.desc()?.calc_buffer_size() {
+    if self.buffer.len() < self.dxgi_output_desc()?.calc_buffer_size() {
       Err("Invalid buffer length".into())
     } else {
       Ok(())
@@ -65,8 +65,8 @@ impl Capturer for SimpleCapturer<'_> {
     }
   }
 
-  fn desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.desc()
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.dxgi_output_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

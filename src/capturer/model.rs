@@ -5,7 +5,7 @@ use windows::Win32::Graphics::Dxgi::{
 
 /// Capturer is stateful, it holds a buffer of the last captured frame.
 pub trait Capturer {
-  fn desc(&self) -> Result<DXGI_OUTPUT_DESC>;
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC>;
 
   /// Get the buffer of the last captured frame.
   /// The buffer is in BGRA32 format.

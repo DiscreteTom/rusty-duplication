@@ -7,6 +7,7 @@
 - **_Breaking Change_**: remove `DuplicationContext.get_pointer`, add `DuplicationContext.capture_frame_with_pointer_shape`.
 - **_Breaking Change_**: remove `Capturer.get_pointer`, add `Capturer.capture_with_pointer_shape/pointer_shape_buffer`.
 - **_Breaking Change_**: rename `DuplicationContext.capture_frame` to `DuplicationContext.capture`.
+- **_Breaking Change_**: rename `desc` to `dxgi_output_desc`.
 - Feat: add `Capturer.pointer_shape_updated`.
 
 ## v0.3.0
