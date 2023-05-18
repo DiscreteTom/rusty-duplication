@@ -130,53 +130,59 @@ impl DuplicationContext {
   }
 }
 
-// #[cfg(test)]
-// mod tests {
-//   use std::{thread, time::Duration};
+#[cfg(test)]
+mod tests {
+  use std::{thread, time::Duration};
 
-//   use crate::{
-//     capturer::model::Capturer,
-//     manager::Manager,
-//     utils::{FrameInfoExt, OutputDescExt},
-//   };
+  use crate::{
+    capturer::model::Capturer,
+    manager::Manager,
+    utils::{FrameInfoExt, OutputDescExt},
+  };
 
-//   #[test]
-//   fn custom_capturer() {
-//     let manager = Manager::default().unwrap();
-//     assert_ne!(manager.contexts.len(), 0);
+  #[test]
+  fn custom_capturer() {
+    let manager = Manager::default().unwrap();
+    assert_ne!(manager.contexts.len(), 0);
 
-//     let ctx = &manager.contexts[0];
-//     let desc = ctx.desc().unwrap();
-//     let mut buffer = vec![0u8; desc.calc_buffer_size()];
-//     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
+    let ctx = &manager.contexts[0];
+    let desc = ctx.desc().unwrap();
+    let mut buffer = vec![0u8; desc.calc_buffer_size()];
+    let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
 
-//     // sleep for a while before capture to wait system to update the screen
-//     thread::sleep(Duration::from_millis(100));
+    // sleep for a while before capture to wait system to update the screen
+    thread::sleep(Duration::from_millis(100));
 
-//     let info = capturer.safe_capture().unwrap();
-//     assert!(info.desktop_updated());
+    let info = capturer.safe_capture().unwrap();
+    assert!(info.desktop_updated());
 
-//     let buffer = capturer.buffer();
-//     // ensure buffer not all zero
-//     let mut all_zero = true;
-//     for i in 0..buffer.len() {
-//       if buffer[i] != 0 {
-//         all_zero = false;
-//         break;
-//       }
-//     }
-//     assert!(!all_zero);
+    let buffer = capturer.buffer();
+    // ensure buffer not all zero
+    let mut all_zero = true;
+    for i in 0..buffer.len() {
+      if buffer[i] != 0 {
+        all_zero = false;
+        break;
+      }
+    }
+    assert!(!all_zero);
 
-//     // check pointer shape
-//     let pointer_shape = capturer.get_pointer_shape(&info).unwrap();
-//     // make sure pointer shape buffer is not all zero
-//     let mut all_zero = true;
-//     for i in 0..pointer_shape.data.len() {
-//       if pointer_shape.data[i] != 0 {
-//         all_zero = false;
-//         break;
-//       }
-//     }
-//     assert!(!all_zero);
-//   }
-// }
+    // sleep for a while before capture to wait system to update the mouse
+    thread::sleep(Duration::from_millis(1000));
+
+    // check pointer shape
+    let (frame_info, pointer_shape_info) = capturer.safe_capture_with_pointer_shape().unwrap();
+    assert!(frame_info.mouse_updated());
+    assert!(pointer_shape_info.is_some());
+    let pointer_shape_data = capturer.pointer_shape_buffer();
+    // make sure pointer shape buffer is not all zero
+    let mut all_zero = true;
+    for i in 0..pointer_shape_data.len() {
+      if pointer_shape_data[i] != 0 {
+        all_zero = false;
+        break;
+      }
+    }
+    assert!(!all_zero);
+  }
+}
