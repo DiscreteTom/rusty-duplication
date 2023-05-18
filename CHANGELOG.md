@@ -5,7 +5,7 @@
 - **_Breaking Change_**: move `Result` to `model` module.
 - **_Breaking Change_**: remove `DuplicationContext.acquire_next_frame`, add `DuplicationContext.next_frame/next_frame_with_pointer_shape`.
 - **_Breaking Change_**: remove `DuplicationContext.get_pointer`, add `DuplicationContext.capture_frame_with_pointer_shape`.
-- **_Breaking Change_**: remove `Capturer.check_buffer/safe_capture/get_pointer`, add `Capturer.capture_with_pointer_shape/pointer_shape_buffer`.
+- **_Breaking Change_**: remove `Capturer.get_pointer`, add `Capturer.capture_with_pointer_shape/pointer_shape_buffer`.
 
 ## v0.3.0
 
