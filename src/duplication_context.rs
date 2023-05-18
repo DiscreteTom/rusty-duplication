@@ -164,6 +164,7 @@ impl DuplicationContext {
     Ok((surface, frame_info, Some(pointer_shape_info)))
   }
 
+  // TODO: rename to capture
   pub fn capture_frame(
     &self,
     dest: *mut u8,
@@ -251,9 +252,12 @@ mod tests {
     }
     assert!(!all_zero);
 
+    // sleep for a while before capture to wait system to update the mouse
+    thread::sleep(Duration::from_millis(1000));
+
     // check pointer
     let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
-    manager.contexts[0]
+    let (frame_info, pointer_shape_info) = manager.contexts[0]
       .capture_frame_with_pointer_shape(
         buffer.as_mut_ptr(),
         buffer.len(),
@@ -261,6 +265,8 @@ mod tests {
         &mut pointer_shape_buffer,
       )
       .unwrap();
+    assert!(frame_info.mouse_updated());
+    assert!(pointer_shape_info.is_some());
 
     // ensure pointer_shape_buffer not all zero
     let mut all_zero = true;
