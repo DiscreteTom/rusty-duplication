@@ -2,11 +2,8 @@ use super::model::Capturer;
 use crate::model::Result;
 use crate::utils::FrameInfoExt;
 use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
-use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
-use windows::Win32::Graphics::{
-  Direct3D11::ID3D11Texture2D,
-  Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
-};
+use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO};
+use windows::Win32::Graphics::{Direct3D11::ID3D11Texture2D, Dxgi::DXGI_OUTPUT_DESC};
 
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
@@ -49,6 +46,14 @@ impl Capturer for SimpleCapturer<'_> {
     &mut self.buffer
   }
 
+  fn check_buffer(&self) -> Result<()> {
+    if self.buffer.len() < self.desc()?.calc_buffer_size() {
+      Err("Invalid buffer length".into())
+    } else {
+      Ok(())
+    }
+  }
+
   fn pointer_shape_buffer(&self) -> &[u8] {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
   }
@@ -63,6 +68,11 @@ impl Capturer for SimpleCapturer<'_> {
       .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
   }
 
+  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    self.check_buffer()?;
+    self.capture()
+  }
+
   fn capture_with_pointer_shape(
     &mut self,
   ) -> Result<(
@@ -73,14 +83,16 @@ impl Capturer for SimpleCapturer<'_> {
       self.buffer.as_mut_ptr(),
       self.buffer.len(),
       &self.texture,
-      &mut self.pointer_shape_buffer,
+      &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 
-    // record the pointer shape buffer size
     if frame_info.mouse_updated() {
-      self.pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
+      // record the pointer shape buffer size
+      // IMPORTANT: change last pointer shape buffer size
+      self.last_pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
 
-      // swap the pointer shape buffer
+      // swap the pointer shape buffer and size
+      // so the last pointer shape buffer will be the current pointer shape buffer
       std::mem::swap(
         &mut self.pointer_shape_buffer,
         &mut self.last_pointer_shape_buffer,
@@ -92,6 +104,16 @@ impl Capturer for SimpleCapturer<'_> {
     }
 
     Ok((frame_info, pointer_shape_info))
+  }
+
+  fn safe_capture_with_pointer_shape(
+    &mut self,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )> {
+    self.check_buffer()?;
+    self.capture_with_pointer_shape()
   }
 }
 

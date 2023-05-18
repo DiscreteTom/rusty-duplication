@@ -54,6 +54,14 @@ impl Capturer for CustomCapturer<'_> {
     &mut self.buffer
   }
 
+  fn check_buffer(&self) -> Result<()> {
+    if self.buffer.len() < self.desc()?.calc_buffer_size() {
+      Err("Invalid buffer length".into())
+    } else {
+      Ok(())
+    }
+  }
+
   fn pointer_shape_buffer(&self) -> &[u8] {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
   }
@@ -68,6 +76,11 @@ impl Capturer for CustomCapturer<'_> {
       .capture_frame(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
   }
 
+  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    self.check_buffer()?;
+    self.capture()
+  }
+
   fn capture_with_pointer_shape(
     &mut self,
   ) -> Result<(
@@ -78,12 +91,13 @@ impl Capturer for CustomCapturer<'_> {
       self.buffer.as_mut_ptr(),
       self.buffer.len(),
       &self.texture,
-      &mut self.pointer_shape_buffer,
+      &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 
-    // record the pointer shape buffer size
     if frame_info.mouse_updated() {
-      self.pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
+      // record the pointer shape buffer size
+      // IMPORTANT: change last pointer shape buffer size
+      self.last_pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
 
       // swap the pointer shape buffer
       std::mem::swap(
@@ -97,6 +111,16 @@ impl Capturer for CustomCapturer<'_> {
     }
 
     Ok((frame_info, pointer_shape_info))
+  }
+
+  fn safe_capture_with_pointer_shape(
+    &mut self,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )> {
+    self.check_buffer()?;
+    self.capture_with_pointer_shape()
   }
 }
 
