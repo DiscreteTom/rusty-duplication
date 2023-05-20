@@ -1,10 +1,11 @@
 {
   "cSpell.words": [
+    "BGRA",
     "Dxgi",
+    "IDXGI",
     "nonoverlapping",
     "OUTDUPL",
     "Unmap",
-    "UNORM",
-    "IDXGI"
+    "UNORM"
   ]
 }
