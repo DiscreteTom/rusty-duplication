@@ -32,12 +32,25 @@ impl<'a> SimpleCapturer<'a> {
 
   fn allocate(ctx: &'a DuplicationContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer = vec![0u8; desc.calc_buffer_size()];
+    let dpi = ctx.effective_dpi(&desc)?;
+    let buffer = vec![0u8; desc.calc_buffer_size(dpi)];
+    println!("dimension: {}x{}", desc.width(), desc.height());
+    println!("dpi: {:?}", dpi);
+    println!(
+      "pixel dimension: {}x{}",
+      desc.pixel_width(dpi.0),
+      desc.pixel_height(dpi.1)
+    );
+    println!("buffer size: {}", buffer.len());
     Ok((buffer, texture))
   }
 }
 
 impl Capturer for SimpleCapturer<'_> {
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.dxgi_output_desc()
+  }
+
   fn buffer(&self) -> &[u8] {
     &self.buffer
   }
@@ -47,7 +60,9 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.dxgi_output_desc()?.calc_buffer_size() {
+    let desc = self.dxgi_output_desc()?;
+    let dpi = self.ctx.effective_dpi(&desc)?;
+    if self.buffer.len() < desc.calc_buffer_size(dpi) {
       Err("Invalid buffer length".into())
     } else {
       Ok(())
@@ -63,10 +78,6 @@ impl Capturer for SimpleCapturer<'_> {
       let len = self.pointer_shape_buffer_size;
       self.pointer_shape_buffer[..len] != self.last_pointer_shape_buffer[..len]
     }
-  }
-
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

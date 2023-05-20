@@ -3,7 +3,9 @@ use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC};
 pub trait OutputDescExt {
   fn width(&self) -> u32;
   fn height(&self) -> u32;
-  fn calc_buffer_size(&self) -> usize;
+  fn pixel_width(&self, dpi: u32) -> u32;
+  fn pixel_height(&self, dpi: u32) -> u32;
+  fn calc_buffer_size(&self, dpi: (u32, u32)) -> usize;
 }
 
 impl OutputDescExt for DXGI_OUTPUT_DESC {
@@ -14,9 +16,16 @@ impl OutputDescExt for DXGI_OUTPUT_DESC {
     (self.DesktopCoordinates.bottom - self.DesktopCoordinates.top) as u32
   }
 
+  fn pixel_width(&self, dpi: u32) -> u32 {
+    self.width() * dpi / 96
+  }
+  fn pixel_height(&self, dpi: u32) -> u32 {
+    self.height() * dpi / 96
+  }
+
   /// Return needed buffer size, in bytes.
-  fn calc_buffer_size(&self) -> usize {
-    (self.width() * self.height() * 4) as usize // 4 for BGRA32
+  fn calc_buffer_size(&self, dpi: (u32, u32)) -> usize {
+    (self.pixel_width(dpi.0) * self.pixel_height(dpi.1) * 4) as usize // 4 for BGRA32
   }
 }
 
@@ -45,13 +54,16 @@ mod tests {
   #[test]
   fn output_desc_ext() {
     let mut desc = DXGI_OUTPUT_DESC::default();
+    let dpi = (96, 96);
     desc.DesktopCoordinates.left = 0;
     desc.DesktopCoordinates.top = 0;
     desc.DesktopCoordinates.right = 1920;
     desc.DesktopCoordinates.bottom = 1080;
     assert_eq!(desc.width(), 1920);
     assert_eq!(desc.height(), 1080);
-    assert_eq!(desc.calc_buffer_size(), 1920 * 1080 * 4);
+    assert_eq!(desc.pixel_width(dpi.0), 1920);
+    assert_eq!(desc.pixel_height(dpi.1), 1080);
+    assert_eq!(desc.calc_buffer_size(dpi), 1920 * 1080 * 4);
   }
 
   #[test]

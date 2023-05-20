@@ -68,7 +68,8 @@ impl<'a> SharedCapturer<'a> {
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer_size = desc.calc_buffer_size();
+    let dpi = ctx.effective_dpi(&desc)?;
+    let buffer_size = desc.calc_buffer_size(dpi);
 
     unsafe {
       let file = CreateFileMappingA(
@@ -99,7 +100,8 @@ impl<'a> SharedCapturer<'a> {
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let buffer_size = desc.calc_buffer_size();
+    let dpi = ctx.effective_dpi(&desc)?;
+    let buffer_size = desc.calc_buffer_size(dpi);
 
     unsafe {
       let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
@@ -136,7 +138,9 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer_size < self.dxgi_output_desc()?.calc_buffer_size() {
+    let desc = self.dxgi_output_desc()?;
+    let dpi = self.ctx.effective_dpi(&desc)?;
+    if self.buffer_size < desc.calc_buffer_size(dpi) {
       return Err("Invalid buffer length".into());
     } else {
       Ok(())

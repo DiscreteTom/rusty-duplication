@@ -1,7 +1,9 @@
 use crate::utils::OutputDescExt;
 use crate::{model::Result, utils::FrameInfoExt};
 use std::ptr;
-use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_RAW_DPI};
+use windows::Win32::UI::HiDpi::{
+  GetDpiForMonitor, MDT_EFFECTIVE_DPI, MDT_RAW_DPI, MONITOR_DPI_TYPE,
+};
 use windows::{
   core::ComInterface,
   Win32::Graphics::{
@@ -50,14 +52,30 @@ impl DuplicationContext {
     Ok(desc)
   }
 
-  pub fn dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
+  pub fn dpi(&self, desc: &DXGI_OUTPUT_DESC, dpi_type: MONITOR_DPI_TYPE) -> Result<(u32, u32)> {
     let mut dpi_x = 0;
     let mut dpi_y = 0;
     unsafe {
-      GetDpiForMonitor(desc.Monitor, MDT_RAW_DPI, &mut dpi_x, &mut dpi_y)
+      GetDpiForMonitor(desc.Monitor, dpi_type, &mut dpi_x, &mut dpi_y)
         .map_err(|e| format!("GetDpiForMonitor failed: {:?}", e))?;
     }
     Ok((dpi_x, dpi_y))
+  }
+
+  pub fn effective_dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
+    self.dpi(desc, MDT_EFFECTIVE_DPI)
+  }
+
+  pub fn raw_dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
+    self.dpi(desc, MDT_RAW_DPI)
+  }
+
+  pub fn pixel_resolution(&self, desc: &DXGI_OUTPUT_DESC, dpi: (u32, u32)) -> (u32, u32) {
+    (desc.pixel_width(dpi.0), desc.pixel_height(dpi.1))
+  }
+
+  pub fn calc_buffer_size(&self, desc: &DXGI_OUTPUT_DESC, dpi: (u32, u32)) -> usize {
+    desc.calc_buffer_size(dpi)
   }
 
   pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTPUT_DESC)> {
@@ -242,7 +260,8 @@ mod tests {
     assert_ne!(manager.contexts.len(), 0);
 
     let (texture, desc) = manager.contexts[0].create_readable_texture().unwrap();
-    let mut buffer = vec![0u8; desc.calc_buffer_size()];
+    let dpi = manager.contexts[0].effective_dpi(&desc).unwrap();
+    let mut buffer = vec![0u8; desc.calc_buffer_size(dpi)];
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

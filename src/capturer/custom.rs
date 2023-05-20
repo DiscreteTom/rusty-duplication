@@ -55,7 +55,9 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.dxgi_output_desc()?.calc_buffer_size() {
+    let desc = self.dxgi_output_desc()?;
+    let dpi = self.ctx.effective_dpi(&desc)?;
+    if self.buffer.len() < desc.calc_buffer_size(dpi) {
       Err("Invalid buffer length".into())
     } else {
       Ok(())
@@ -154,7 +156,8 @@ mod tests {
 
     let ctx = &manager.contexts[0];
     let desc = ctx.dxgi_output_desc().unwrap();
-    let mut buffer = vec![0u8; desc.calc_buffer_size()];
+    let dpi = ctx.effective_dpi(&desc).unwrap();
+    let mut buffer = vec![0u8; desc.calc_buffer_size(dpi)];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
 
     // sleep for a while before capture to wait system to update the screen
