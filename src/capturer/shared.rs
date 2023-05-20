@@ -1,6 +1,6 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::model::Result;
+use crate::model::{Error, Result};
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use std::slice;
 use windows::core::PCSTR;
@@ -79,7 +79,7 @@ impl<'a> SharedCapturer<'a> {
         buffer_size as u32,
         PCSTR(name.as_ptr()),
       )
-      .map_err(|e| format!("CreateFileMappingA failed: {:?}", e))?;
+      .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
       let buffer = MapViewOfFile(
         file,                // handle to map object
@@ -88,7 +88,7 @@ impl<'a> SharedCapturer<'a> {
         0,
         buffer_size,
       )
-      .map_err(|e| format!("MapViewOfFile failed: {:?}", e))?
+      .map_err(|e| Error::windows("MapViewOfFile", e))?
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture))
     }
@@ -103,7 +103,7 @@ impl<'a> SharedCapturer<'a> {
 
     unsafe {
       let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
-        .map_err(|e| format!("CreateFileMappingA failed: {:?}", e))?;
+        .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
       let buffer = MapViewOfFile(
         file,                // handle to map object
@@ -112,7 +112,7 @@ impl<'a> SharedCapturer<'a> {
         0,
         buffer_size,
       )
-      .map_err(|e| format!("MapViewOfFile failed: {:?}", e))?
+      .map_err(|e| Error::windows("MapViewOfFile", e))?
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture))
     }
@@ -146,7 +146,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
   fn check_buffer(&self) -> Result<()> {
     // TODO: is this needed to be checked every time?
     if self.buffer_size < self.dxgi_outdupl_desc().calc_buffer_size() {
-      return Err("Invalid buffer length".into());
+      Err(Error::new("Invalid buffer length"))
     } else {
       Ok(())
     }

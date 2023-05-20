@@ -1,5 +1,5 @@
 use crate::duplication_context::DuplicationContext;
-use crate::model::Result;
+use crate::model::{Error, Result};
 use windows::core::ComInterface;
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_9_1};
 use windows::Win32::Graphics::Direct3D11::{
@@ -35,7 +35,7 @@ impl Manager {
     self.contexts.clear();
 
     let factory = unsafe { CreateDXGIFactory1::<IDXGIFactory1>() }
-      .map_err(|e| format!("CreateDXGIFactory1 failed: {:?}", e))?;
+      .map_err(|e| Error::windows("CreateDXGIFactory1", e))?;
     let mut adapter_outputs = Vec::new();
 
     // collect adapters and outputs
@@ -56,7 +56,7 @@ impl Manager {
       }
     }
     if adapter_outputs.len() == 0 {
-      return Err("No output".into());
+      return Err(Error::new("No output"));
     }
 
     // prepare device and output
@@ -79,7 +79,7 @@ impl Manager {
           Some(&mut device_context),
         )
       }
-      .map_err(|e| format!("D3D11CreateDevice failed: {:?}", e))?;
+      .map_err(|e| Error::windows("D3D11CreateDevice", e))?;
       let device = device.unwrap();
       let device_context = device_context.unwrap();
 
@@ -87,7 +87,7 @@ impl Manager {
       for output in outputs {
         let output = output.cast::<IDXGIOutput1>().unwrap();
         let output_duplication = unsafe { output.DuplicateOutput(&device) }
-          .map_err(|e| format!("DuplicateOutput failed: {:?}", e))?;
+          .map_err(|e| Error::windows("DuplicateOutput", e))?;
         self.contexts.push(DuplicationContext::new(
           device.clone(),
           device_context.clone(),

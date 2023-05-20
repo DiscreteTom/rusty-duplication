@@ -1,4 +1,7 @@
-use crate::{model::Result, utils::FrameInfoExt};
+use crate::{
+  model::{Error, Result},
+  utils::FrameInfoExt,
+};
 use std::ptr;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
 use windows::{
@@ -47,7 +50,7 @@ impl DuplicationContext {
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     let mut desc = DXGI_OUTPUT_DESC::default();
     unsafe { self.output.GetDesc(&mut desc) }
-      .map_err(|e| format!("DXGI_OUTPUT_DESC.GetDesc failed: {:?}", e))?;
+      .map_err(|e| Error::windows("DXGI_OUTPUT_DESC.GetDesc", e))?;
     Ok(desc)
   }
 
@@ -85,7 +88,7 @@ impl DuplicationContext {
         .device
         .CreateTexture2D(&texture_desc, None, Some(&mut readable_texture))
     }
-    .map_err(|e| format!("CreateTexture2D failed: {:?}", e))?;
+    .map_err(|e| Error::windows("CreateTexture2D", e))?;
     let readable_texture = readable_texture.unwrap();
     // Lower priorities causes stuff to be needlessly copied from gpu to ram,
     // causing huge ram usage on some systems.
@@ -107,7 +110,7 @@ impl DuplicationContext {
         .output_duplication
         .AcquireNextFrame(self.timeout_ms, &mut frame_info, &mut resource)
     }
-    .map_err(|e| format!("AcquireNextFrame failed: {:?}", e))?;
+    .map_err(|e| Error::windows("AcquireNextFrame", e))?;
     let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy GPU texture to readable texture
@@ -117,8 +120,7 @@ impl DuplicationContext {
   }
 
   fn release_frame(&self) -> Result<()> {
-    unsafe { self.output_duplication.ReleaseFrame() }
-      .map_err(|e| format!("ReleaseFrame failed: {:?}", e))
+    unsafe { self.output_duplication.ReleaseFrame() }.map_err(|e| Error::windows("ReleaseFrame", e))
   }
 
   pub fn next_frame(
@@ -165,7 +167,7 @@ impl DuplicationContext {
           &mut size,
           &mut pointer_shape_info,
         )
-        .map_err(|e| format!("GetFramePointerShape failed: {:?}", e))?;
+        .map_err(|e| Error::windows("GetFramePointerShape", e))?;
     }
 
     self.release_frame()?;
@@ -185,11 +187,9 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(|e| format!("Map failed: {:?}", e))?;
+        .map_err(|e| Error::windows("Map", e))?;
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-      frame
-        .Unmap()
-        .map_err(|e| format!("Unmap failed: {:?}", e))?;
+      frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
 
     Ok(frame_info)
@@ -214,11 +214,9 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(|e| format!("Map failed: {:?}", e))?;
+        .map_err(|e| Error::windows("Map", e))?;
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-      frame
-        .Unmap()
-        .map_err(|e| format!("Unmap failed: {:?}", e))?;
+      frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
 
     Ok((frame_info, pointer_shape_info))

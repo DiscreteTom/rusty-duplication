@@ -9,6 +9,7 @@
 - **_Breaking Change_**: rename `DuplicationContext.capture_frame` to `DuplicationContext.capture`.
 - **_Breaking Change_**: rename `desc` to `dxgi_output_desc`.
 - **_Breaking Change_**: remove `OutputDescExt.calc_buffer_size`, use `OutDuplDescExt.calc_buffer_size` instead.
+- **_Breaking Change_**: apply new `Error` type for better error handling.
 - Feat: add `Capturer.pointer_shape_updated`.
 - Feat: add `DuplicationContext/Capturer.dxgi_outdupl_desc`.
 - Fix: wrong screen size in high dpi. #5

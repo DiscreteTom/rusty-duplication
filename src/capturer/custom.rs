@@ -1,6 +1,6 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::model::Result;
+use crate::model::{Error, Result};
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::Graphics::{
@@ -65,7 +65,7 @@ impl Capturer for CustomCapturer<'_> {
   fn check_buffer(&self) -> Result<()> {
     // TODO: is this needed to be checked every time?
     if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
-      Err("Invalid buffer length".into())
+      Err(Error::new("Invalid buffer length"))
     } else {
       Ok(())
     }
