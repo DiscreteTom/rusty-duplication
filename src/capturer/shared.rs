@@ -1,7 +1,7 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
 use crate::model::Result;
-use crate::utils::{FrameInfoExt, OutputDescExt};
+use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use std::slice;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
@@ -68,8 +68,7 @@ impl<'a> SharedCapturer<'a> {
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let dpi = ctx.effective_dpi(&desc)?;
-    let buffer_size = desc.calc_buffer_size(dpi);
+    let buffer_size = desc.calc_buffer_size();
 
     unsafe {
       let file = CreateFileMappingA(
@@ -100,8 +99,7 @@ impl<'a> SharedCapturer<'a> {
     name: &str,
   ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let dpi = ctx.effective_dpi(&desc)?;
-    let buffer_size = desc.calc_buffer_size(dpi);
+    let buffer_size = desc.calc_buffer_size();
 
     unsafe {
       let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
@@ -129,6 +127,14 @@ impl<'a> SharedCapturer<'a> {
 }
 
 impl<'a> Capturer for SharedCapturer<'a> {
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.dxgi_output_desc()
+  }
+
+  fn dxgi_outdupl_desc(&self) -> windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC {
+    self.ctx.dxgi_outdupl_desc()
+  }
+
   fn buffer(&self) -> &[u8] {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }
@@ -138,9 +144,8 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    let desc = self.dxgi_output_desc()?;
-    let dpi = self.ctx.effective_dpi(&desc)?;
-    if self.buffer_size < desc.calc_buffer_size(dpi) {
+    // TODO: is this needed to be checked every time?
+    if self.buffer_size < self.dxgi_outdupl_desc().calc_buffer_size() {
       return Err("Invalid buffer length".into());
     } else {
       Ok(())
@@ -156,10 +161,6 @@ impl<'a> Capturer for SharedCapturer<'a> {
       let len = self.pointer_shape_buffer_size;
       self.pointer_shape_buffer[..len] != self.last_pointer_shape_buffer[..len]
     }
-  }
-
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {

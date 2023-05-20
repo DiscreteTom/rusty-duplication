@@ -1,9 +1,6 @@
-use crate::utils::OutputDescExt;
 use crate::{model::Result, utils::FrameInfoExt};
 use std::ptr;
-use windows::Win32::UI::HiDpi::{
-  GetDpiForMonitor, MDT_EFFECTIVE_DPI, MDT_RAW_DPI, MONITOR_DPI_TYPE,
-};
+use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
 use windows::{
   core::ComInterface,
   Win32::Graphics::{
@@ -46,40 +43,23 @@ impl DuplicationContext {
     }
   }
 
+  /// This is usually used to get the screen's position and size.
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     let mut desc = DXGI_OUTPUT_DESC::default();
-    unsafe { self.output.GetDesc(&mut desc) }.map_err(|e| format!("GetDesc failed: {:?}", e))?;
+    unsafe { self.output.GetDesc(&mut desc) }
+      .map_err(|e| format!("DXGI_OUTPUT_DESC.GetDesc failed: {:?}", e))?;
     Ok(desc)
   }
 
-  pub fn dpi(&self, desc: &DXGI_OUTPUT_DESC, dpi_type: MONITOR_DPI_TYPE) -> Result<(u32, u32)> {
-    let mut dpi_x = 0;
-    let mut dpi_y = 0;
-    unsafe {
-      GetDpiForMonitor(desc.Monitor, dpi_type, &mut dpi_x, &mut dpi_y)
-        .map_err(|e| format!("GetDpiForMonitor failed: {:?}", e))?;
-    }
-    Ok((dpi_x, dpi_y))
+  /// This is usually used to get the screen's pixel width/height and buffer size.
+  pub fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
+    let mut desc = DXGI_OUTDUPL_DESC::default();
+    unsafe { self.output_duplication.GetDesc(&mut desc) };
+    desc
   }
 
-  pub fn effective_dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
-    self.dpi(desc, MDT_EFFECTIVE_DPI)
-  }
-
-  pub fn raw_dpi(&self, desc: &DXGI_OUTPUT_DESC) -> Result<(u32, u32)> {
-    self.dpi(desc, MDT_RAW_DPI)
-  }
-
-  pub fn pixel_resolution(&self, desc: &DXGI_OUTPUT_DESC, dpi: (u32, u32)) -> (u32, u32) {
-    (desc.pixel_width(dpi.0), desc.pixel_height(dpi.1))
-  }
-
-  pub fn calc_buffer_size(&self, desc: &DXGI_OUTPUT_DESC, dpi: (u32, u32)) -> usize {
-    desc.calc_buffer_size(dpi)
-  }
-
-  pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTPUT_DESC)> {
-    let desc = self.dxgi_output_desc()?;
+  pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC)> {
+    let desc = self.dxgi_outdupl_desc();
 
     // create a readable texture description
     let texture_desc = D3D11_TEXTURE2D_DESC {
@@ -87,8 +67,8 @@ impl DuplicationContext {
       CPUAccessFlags: D3D11_CPU_ACCESS_READ,
       MiscFlags: D3D11_RESOURCE_MISC_FLAG::default(),
       Usage: D3D11_USAGE_STAGING, // A resource that supports data transfer (copy) from the GPU to the CPU.
-      Width: desc.width(),
-      Height: desc.height(),
+      Width: desc.ModeDesc.Width,
+      Height: desc.ModeDesc.Height,
       MipLevels: 1,
       ArraySize: 1,
       Format: DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -251,7 +231,7 @@ mod tests {
 
   use crate::{
     manager::Manager,
-    utils::{FrameInfoExt, OutputDescExt},
+    utils::{FrameInfoExt, OutDuplDescExt},
   };
 
   #[test]
@@ -260,8 +240,7 @@ mod tests {
     assert_ne!(manager.contexts.len(), 0);
 
     let (texture, desc) = manager.contexts[0].create_readable_texture().unwrap();
-    let dpi = manager.contexts[0].effective_dpi(&desc).unwrap();
-    let mut buffer = vec![0u8; desc.calc_buffer_size(dpi)];
+    let mut buffer = vec![0u8; desc.calc_buffer_size()];
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

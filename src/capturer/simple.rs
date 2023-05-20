@@ -1,8 +1,10 @@
 use super::model::Capturer;
+use crate::duplication_context::DuplicationContext;
 use crate::model::Result;
-use crate::utils::FrameInfoExt;
-use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
-use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO};
+use crate::utils::{FrameInfoExt, OutDuplDescExt};
+use windows::Win32::Graphics::Dxgi::{
+  DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
+};
 use windows::Win32::Graphics::{Direct3D11::ID3D11Texture2D, Dxgi::DXGI_OUTPUT_DESC};
 
 /// Capture screen to a `Vec<u8>`.
@@ -32,16 +34,7 @@ impl<'a> SimpleCapturer<'a> {
 
   fn allocate(ctx: &'a DuplicationContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
     let (texture, desc) = ctx.create_readable_texture()?;
-    let dpi = ctx.effective_dpi(&desc)?;
-    let buffer = vec![0u8; desc.calc_buffer_size(dpi)];
-    println!("dimension: {}x{}", desc.width(), desc.height());
-    println!("dpi: {:?}", dpi);
-    println!(
-      "pixel dimension: {}x{}",
-      desc.pixel_width(dpi.0),
-      desc.pixel_height(dpi.1)
-    );
-    println!("buffer size: {}", buffer.len());
+    let buffer = vec![0u8; desc.calc_buffer_size()];
     Ok((buffer, texture))
   }
 }
@@ -49,6 +42,10 @@ impl<'a> SimpleCapturer<'a> {
 impl Capturer for SimpleCapturer<'_> {
   fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     self.ctx.dxgi_output_desc()
+  }
+
+  fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
+    self.ctx.dxgi_outdupl_desc()
   }
 
   fn buffer(&self) -> &[u8] {
@@ -60,9 +57,8 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    let desc = self.dxgi_output_desc()?;
-    let dpi = self.ctx.effective_dpi(&desc)?;
-    if self.buffer.len() < desc.calc_buffer_size(dpi) {
+    // TODO: is this needed to be checked every time?
+    if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
       Err("Invalid buffer length".into())
     } else {
       Ok(())

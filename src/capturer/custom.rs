@@ -1,7 +1,7 @@
 use super::model::Capturer;
+use crate::duplication_context::DuplicationContext;
 use crate::model::Result;
-use crate::utils::FrameInfoExt;
-use crate::{duplication_context::DuplicationContext, utils::OutputDescExt};
+use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::Graphics::{
   Direct3D11::ID3D11Texture2D,
@@ -46,6 +46,14 @@ impl<'a> CustomCapturer<'a> {
 }
 
 impl Capturer for CustomCapturer<'_> {
+  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
+    self.ctx.dxgi_output_desc()
+  }
+
+  fn dxgi_outdupl_desc(&self) -> windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC {
+    self.ctx.dxgi_outdupl_desc()
+  }
+
   fn buffer(&self) -> &[u8] {
     &self.buffer
   }
@@ -55,9 +63,8 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    let desc = self.dxgi_output_desc()?;
-    let dpi = self.ctx.effective_dpi(&desc)?;
-    if self.buffer.len() < desc.calc_buffer_size(dpi) {
+    // TODO: is this needed to be checked every time?
+    if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
       Err("Invalid buffer length".into())
     } else {
       Ok(())
@@ -73,10 +80,6 @@ impl Capturer for CustomCapturer<'_> {
       let len = self.pointer_shape_buffer_size;
       self.pointer_shape_buffer[..len] != self.last_pointer_shape_buffer[..len]
     }
-  }
-
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -146,7 +149,7 @@ mod tests {
   use crate::{
     capturer::model::Capturer,
     manager::Manager,
-    utils::{FrameInfoExt, OutputDescExt},
+    utils::{FrameInfoExt, OutDuplDescExt},
   };
 
   #[test]
@@ -155,9 +158,8 @@ mod tests {
     assert_ne!(manager.contexts.len(), 0);
 
     let ctx = &manager.contexts[0];
-    let desc = ctx.dxgi_output_desc().unwrap();
-    let dpi = ctx.effective_dpi(&desc).unwrap();
-    let mut buffer = vec![0u8; desc.calc_buffer_size(dpi)];
+    let desc = ctx.dxgi_outdupl_desc();
+    let mut buffer = vec![0u8; desc.calc_buffer_size()];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
 
     // sleep for a while before capture to wait system to update the screen

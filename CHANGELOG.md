@@ -8,8 +8,10 @@
 - **_Breaking Change_**: remove `Capturer.get_pointer`, add `Capturer.capture_with_pointer_shape/pointer_shape_buffer`.
 - **_Breaking Change_**: rename `DuplicationContext.capture_frame` to `DuplicationContext.capture`.
 - **_Breaking Change_**: rename `desc` to `dxgi_output_desc`.
+- **_Breaking Change_**: remove `OutputDescExt.calc_buffer_size`, use `OutDuplDescExt.calc_buffer_size` instead.
 - Feat: add `Capturer.pointer_shape_updated`.
-- Feat: add `DuplicationContext.dpi`.
+- Feat: add `DuplicationContext/Capturer.dxgi_outdupl_desc`.
+- Fix: wrong screen size in high dpi. #5
 
 ## v0.3.0
 
