@@ -1,5 +1,6 @@
 use crate::duplication_context::DuplicationContext;
-use crate::model::{Error, Result};
+use crate::error::Error;
+use crate::model::Result;
 use windows::core::ComInterface;
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_9_1};
 use windows::Win32::Graphics::Direct3D11::{

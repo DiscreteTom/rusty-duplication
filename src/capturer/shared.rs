@@ -1,6 +1,7 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::model::{Error, Result};
+use crate::error::Error;
+use crate::model::Result;
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use std::slice;
 use windows::core::PCSTR;
