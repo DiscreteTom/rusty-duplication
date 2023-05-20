@@ -30,7 +30,8 @@ fn main() {
 
   // you can get monitor info before capturing start
   // for ctx in &manager.contexts {
-  //   ctx.desc().unwrap();
+  //   ctx.dxgi_output_desc().unwrap();
+  //   ctx.dxgi_outdupl_desc();
   // }
 
   // create capturer for a display
@@ -38,9 +39,12 @@ fn main() {
   let mut capturer = manager.contexts[0].simple_capturer().unwrap();
 
   // you can also get monitor info from a capturer
-  let desc = capturer.desc().unwrap();
-  // we have some extension methods for you such as `width/height`
-  println!("size: {}x{}", desc.width(), desc.height());
+  let dxgi_outdupl_desc = capturer.dxgi_outdupl_desc().unwrap();
+  let dxgi_output_desc = capturer.dxgi_output_desc().unwrap();
+  // get resolution width/height
+  println!("size: {}x{}", dxgi_outdupl_desc.ModeDesc.Width, dxgi_outdupl_desc.ModeDesc.Height);
+  // get position
+  println!("left: {}, top: {}, right: {}, bottom: {}", dxgi_output_desc.DesktopCoordinates.left, dxgi_output_desc.DesktopCoordinates.top, dxgi_output_desc.DesktopCoordinates.right, dxgi_output_desc.DesktopCoordinates.bottom);
 
   // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
