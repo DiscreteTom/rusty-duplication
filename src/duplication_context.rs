@@ -192,6 +192,7 @@ impl DuplicationContext {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(|e| Error::windows("Map", e))?;
+      // TODO: maybe we need to use mapped_surface.Pitch copy data line by line?
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
@@ -219,6 +220,7 @@ impl DuplicationContext {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(|e| Error::windows("Map", e))?;
+      // TODO: maybe we need to use mapped_surface.Pitch copy data line by line?
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
