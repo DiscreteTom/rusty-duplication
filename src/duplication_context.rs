@@ -247,13 +247,22 @@ mod tests {
 
   use crate::{
     manager::Manager,
-    utils::{FrameInfoExt, OutDuplDescExt},
+    utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt},
   };
 
   #[test]
   fn duplication_context() {
     let manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);
+
+    // make sure only one primary monitor
+    let mut primary_monitor_count = 0;
+    for c in &manager.contexts {
+      if c.monitor_info().unwrap().is_primary() {
+        primary_monitor_count += 1;
+      }
+    }
+    assert_eq!(primary_monitor_count, 1);
 
     let (texture, desc) = manager.contexts[0].create_readable_texture().unwrap();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];

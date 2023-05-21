@@ -56,11 +56,12 @@ impl MonitorInfoExt for MONITORINFO {
 
 #[cfg(test)]
 mod tests {
-  use windows::Win32::Graphics::Dxgi::{
-    DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC,
+  use windows::Win32::Graphics::{
+    Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
+    Gdi::MONITORINFO,
   };
 
-  use crate::utils::{FrameInfoExt, OutDuplDescExt, OutputDescExt};
+  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, OutputDescExt};
 
   #[test]
   fn output_desc_ext() {
@@ -87,5 +88,16 @@ mod tests {
     assert!(!desc.desktop_updated());
     desc.LastPresentTime = 1;
     assert!(desc.desktop_updated());
+    assert!(!desc.mouse_updated());
+    desc.LastMouseUpdateTime = 1;
+    assert!(desc.mouse_updated());
+  }
+
+  #[test]
+  fn monitor_info_ext() {
+    let mut info = MONITORINFO::default();
+    assert!(!info.is_primary());
+    info.dwFlags = 0x01;
+    assert!(info.is_primary());
   }
 }
