@@ -1,5 +1,6 @@
-use windows::Win32::Graphics::Dxgi::{
-  DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC,
+use windows::Win32::Graphics::{
+  Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
+  Gdi::MONITORINFO,
 };
 
 pub trait OutputDescExt {
@@ -40,6 +41,16 @@ impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
   /// Return true if mouse's shape or/and position is updated.
   fn mouse_updated(&self) -> bool {
     self.LastMouseUpdateTime > 0
+  }
+}
+
+pub trait MonitorInfoExt {
+  fn is_primary(&self) -> bool;
+}
+
+impl MonitorInfoExt for MONITORINFO {
+  fn is_primary(&self) -> bool {
+    self.dwFlags == 0x01 // MONITORINFOF_PRIMARY
   }
 }
 

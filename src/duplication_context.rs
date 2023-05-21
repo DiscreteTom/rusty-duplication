@@ -2,6 +2,7 @@ use crate::error::Error;
 use crate::{model::Result, utils::FrameInfoExt};
 use std::ptr;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
+use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO};
 use windows::{
   core::ComInterface,
   Win32::Graphics::{
@@ -42,6 +43,15 @@ impl DuplicationContext {
       output,
       output_duplication,
     }
+  }
+
+  pub fn monitor_info(&self) -> Result<MONITORINFO> {
+    let h_monitor = self.dxgi_output_desc()?.Monitor;
+    let mut info = MONITORINFO::default();
+    unsafe {
+      GetMonitorInfoW(h_monitor, &mut info);
+    }
+    Ok(info)
   }
 
   /// This is usually used to get the screen's position and size.

@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.4.1
+
+- Feat: add `DuplicationContext.monitor_info` and `MONITORINFO.is_primary`.
+
 ## v0.4.0
 
 - **_Breaking Change_**: move `Result` to `model` module.
