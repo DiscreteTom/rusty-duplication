@@ -4,9 +4,11 @@
     "Dxgi",
     "HMONITOR",
     "IDXGI",
+    "millis",
     "MONITORINFO",
     "nonoverlapping",
     "OUTDUPL",
+    "println",
     "Unmap",
     "UNORM"
   ]
