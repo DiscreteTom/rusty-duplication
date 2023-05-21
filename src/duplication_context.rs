@@ -144,6 +144,7 @@ impl DuplicationContext {
     let (surface, frame_info) = self.acquire_next_frame(readable_texture)?;
 
     if !frame_info.mouse_updated() {
+      self.release_frame()?;
       return Ok((surface, frame_info, None));
     }
 
@@ -156,7 +157,7 @@ impl DuplicationContext {
     // get pointer shape
     let mut size: u32 = 0;
     let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
-    unsafe {
+    match unsafe {
       self
         .output_duplication
         .GetFramePointerShape(
@@ -165,12 +166,17 @@ impl DuplicationContext {
           &mut size,
           &mut pointer_shape_info,
         )
-        .map_err(|e| Error::windows("GetFramePointerShape", e))?;
+        .map_err(|e| Error::windows("GetFramePointerShape", e))
+    } {
+      Ok(_) => {
+        self.release_frame()?;
+        Ok((surface, frame_info, Some(pointer_shape_info)))
+      }
+      Err(e) => {
+        self.release_frame()?;
+        return Err(e);
+      }
     }
-
-    self.release_frame()?;
-
-    Ok((surface, frame_info, Some(pointer_shape_info)))
   }
 
   pub fn capture(
