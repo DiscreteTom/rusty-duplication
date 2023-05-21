@@ -48,10 +48,12 @@ impl DuplicationContext {
   pub fn monitor_info(&self) -> Result<MONITORINFO> {
     let h_monitor = self.dxgi_output_desc()?.Monitor;
     let mut info = MONITORINFO::default();
-    unsafe {
-      GetMonitorInfoW(h_monitor, &mut info);
+    info.cbSize = std::mem::size_of::<MONITORINFO>() as u32;
+    if unsafe { GetMonitorInfoW(h_monitor, &mut info).as_bool() } {
+      Ok(info)
+    } else {
+      Err(Error::new("GetMonitorInfoW"))
     }
-    Ok(info)
   }
 
   /// This is usually used to get the screen's position and size.
