@@ -3,6 +3,7 @@ use crate::duplication_context::DuplicationContext;
 use crate::error::Error;
 use crate::model::Result;
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
+use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::Graphics::{
   Direct3D11::ID3D11Texture2D,
@@ -14,6 +15,7 @@ pub struct CustomCapturer<'a> {
   buffer: &'a mut [u8],
   ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
+  texture_desc: D3D11_TEXTURE2D_DESC,
   last_pointer_shape_buffer: Vec<u8>,
   last_pointer_shape_buffer_size: usize,
   pointer_shape_buffer: Vec<u8>,
@@ -25,11 +27,13 @@ impl<'a> CustomCapturer<'a> {
     ctx: &'a DuplicationContext,
     buffer: &'a mut [u8],
     texture: ID3D11Texture2D,
+    texture_desc: D3D11_TEXTURE2D_DESC,
   ) -> Self {
     Self {
       buffer,
       ctx,
       texture,
+      texture_desc,
       last_pointer_shape_buffer: Vec::new(),
       last_pointer_shape_buffer_size: 0,
       pointer_shape_buffer: Vec::new(),
@@ -38,11 +42,8 @@ impl<'a> CustomCapturer<'a> {
   }
 
   pub fn new(ctx: &'a DuplicationContext, buffer: &'a mut [u8]) -> Result<Self> {
-    Ok(Self::with_texture(
-      ctx,
-      buffer,
-      ctx.create_readable_texture()?.0,
-    ))
+    let (texture, _desc, texture_desc) = ctx.create_readable_texture()?;
+    Ok(Self::with_texture(ctx, buffer, texture, texture_desc))
   }
 }
 
@@ -84,9 +85,12 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    self
-      .ctx
-      .capture(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
+    self.ctx.capture(
+      self.buffer.as_mut_ptr(),
+      self.buffer.len(),
+      &self.texture,
+      &self.texture_desc,
+    )
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -104,6 +108,7 @@ impl Capturer for CustomCapturer<'_> {
       self.buffer.as_mut_ptr(),
       self.buffer.len(),
       &self.texture,
+      &self.texture_desc,
       &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 

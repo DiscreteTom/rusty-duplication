@@ -71,7 +71,9 @@ impl DuplicationContext {
     desc
   }
 
-  pub fn create_readable_texture(&self) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC)> {
+  pub fn create_readable_texture(
+    &self,
+  ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
     let desc = self.dxgi_outdupl_desc();
 
     // create a readable texture description
@@ -105,7 +107,7 @@ impl DuplicationContext {
     // https://github.com/bryal/dxgcap-rs/blob/208d93368bc64aed783791242410459c878a10fb/src/lib.rs#L225
     unsafe { readable_texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
 
-    Ok((readable_texture, desc))
+    Ok((readable_texture, desc, texture_desc))
   }
 
   fn acquire_next_frame(
@@ -196,16 +198,28 @@ impl DuplicationContext {
     dest: *mut u8,
     len: usize,
     readable_texture: &ID3D11Texture2D,
+    texture_desc: &D3D11_TEXTURE2D_DESC,
   ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     let (frame, frame_info) = self.next_frame(readable_texture)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
+    let line_bytes = texture_desc.Width as usize * 4;
 
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(|e| Error::windows("Map", e))?;
-      // TODO: maybe we need to use mapped_surface.Pitch copy data line by line?
-      ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
+      if mapped_surface.Pitch as usize == line_bytes {
+        ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
+      } else {
+        // https://github.com/DiscreteTom/rusty-duplication/issues/7
+        for i in 0..texture_desc.Height {
+          let src = mapped_surface
+            .pBits
+            .offset((i * mapped_surface.Pitch as u32) as isize);
+          let dest = dest.offset((i * line_bytes as u32) as isize);
+          ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
+        }
+      }
       frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
 
@@ -219,6 +233,7 @@ impl DuplicationContext {
     dest: *mut u8,
     len: usize,
     readable_texture: &ID3D11Texture2D,
+    texture_desc: &D3D11_TEXTURE2D_DESC,
     pointer_shape_buffer: &mut Vec<u8>,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
@@ -227,13 +242,24 @@ impl DuplicationContext {
     let (frame, frame_info, pointer_shape_info) =
       self.next_frame_with_pointer_shape(readable_texture, pointer_shape_buffer)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
+    let line_bytes = texture_desc.Width as usize * 4;
 
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(|e| Error::windows("Map", e))?;
-      // TODO: maybe we need to use mapped_surface.Pitch copy data line by line?
-      ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
+      if mapped_surface.Pitch as usize == line_bytes {
+        ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
+      } else {
+        // https://github.com/DiscreteTom/rusty-duplication/issues/7
+        for i in 0..texture_desc.Height {
+          let src = mapped_surface
+            .pBits
+            .offset((i * mapped_surface.Pitch as u32) as isize);
+          let dest = dest.offset((i * line_bytes as u32) as isize);
+          ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
+        }
+      }
       frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
     }
 
@@ -264,14 +290,14 @@ mod tests {
     }
     assert_eq!(primary_monitor_count, 1);
 
-    let (texture, desc) = manager.contexts[0].create_readable_texture().unwrap();
+    let (texture, desc, texture_desc) = manager.contexts[0].create_readable_texture().unwrap();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
 
     let info = manager.contexts[0]
-      .capture(buffer.as_mut_ptr(), buffer.len(), &texture)
+      .capture(buffer.as_mut_ptr(), buffer.len(), &texture, &texture_desc)
       .unwrap();
     assert!(info.desktop_updated());
 
@@ -295,6 +321,7 @@ mod tests {
         buffer.as_mut_ptr(),
         buffer.len(),
         &texture,
+        &texture_desc,
         &mut pointer_shape_buffer,
       )
       .unwrap();

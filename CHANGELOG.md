@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.4.2
+
+- Fix: copy memory using `mapped_surface.Pitch`. #7
+
 ## v0.4.1
 
 - Feat: add `DuplicationContext.monitor_info` and `MONITORINFO.is_primary`.

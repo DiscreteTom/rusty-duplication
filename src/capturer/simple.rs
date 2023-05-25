@@ -3,6 +3,7 @@ use crate::duplication_context::DuplicationContext;
 use crate::error::Error;
 use crate::model::Result;
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
+use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::{
   DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
 };
@@ -13,6 +14,7 @@ pub struct SimpleCapturer<'a> {
   buffer: Vec<u8>,
   ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
+  texture_desc: D3D11_TEXTURE2D_DESC,
   last_pointer_shape_buffer: Vec<u8>,
   last_pointer_shape_buffer_size: usize,
   pointer_shape_buffer: Vec<u8>,
@@ -21,11 +23,12 @@ pub struct SimpleCapturer<'a> {
 
 impl<'a> SimpleCapturer<'a> {
   pub fn new(ctx: &'a DuplicationContext) -> Result<Self> {
-    let (buffer, texture) = Self::allocate(ctx)?;
+    let (buffer, texture, texture_desc) = Self::allocate(ctx)?;
     Ok(Self {
       buffer,
       ctx,
       texture,
+      texture_desc,
       last_pointer_shape_buffer: Vec::new(),
       last_pointer_shape_buffer_size: 0,
       pointer_shape_buffer: Vec::new(),
@@ -33,10 +36,12 @@ impl<'a> SimpleCapturer<'a> {
     })
   }
 
-  fn allocate(ctx: &'a DuplicationContext) -> Result<(Vec<u8>, ID3D11Texture2D)> {
-    let (texture, desc) = ctx.create_readable_texture()?;
+  fn allocate(
+    ctx: &'a DuplicationContext,
+  ) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
+    let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer = vec![0u8; desc.calc_buffer_size()];
-    Ok((buffer, texture))
+    Ok((buffer, texture, texture_desc))
   }
 }
 
@@ -78,9 +83,12 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    self
-      .ctx
-      .capture(self.buffer.as_mut_ptr(), self.buffer.len(), &self.texture)
+    self.ctx.capture(
+      self.buffer.as_mut_ptr(),
+      self.buffer.len(),
+      &self.texture,
+      &self.texture_desc,
+    )
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -98,6 +106,7 @@ impl Capturer for SimpleCapturer<'_> {
       self.buffer.as_mut_ptr(),
       self.buffer.len(),
       &self.texture,
+      &self.texture_desc,
       &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 

@@ -6,6 +6,7 @@ use crate::utils::{FrameInfoExt, OutDuplDescExt};
 use std::slice;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
+use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::System::Memory::{
   CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
@@ -27,6 +28,7 @@ pub struct SharedCapturer<'a> {
   file: HANDLE,
   ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
+  texture_desc: D3D11_TEXTURE2D_DESC,
   last_pointer_shape_buffer: Vec<u8>,
   last_pointer_shape_buffer_size: usize,
   pointer_shape_buffer: Vec<u8>,
@@ -35,12 +37,13 @@ pub struct SharedCapturer<'a> {
 
 impl<'a> SharedCapturer<'a> {
   pub fn new(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
-    let (buffer, buffer_size, file, texture) = Self::allocate(ctx, name)?;
+    let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(ctx, name)?;
     Ok(Self {
       buffer,
       buffer_size,
       file,
       texture,
+      texture_desc,
       ctx,
       last_pointer_shape_buffer: Vec::new(),
       last_pointer_shape_buffer_size: 0,
@@ -50,12 +53,13 @@ impl<'a> SharedCapturer<'a> {
   }
 
   pub fn open(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
-    let (buffer, buffer_size, file, texture) = Self::open_file(ctx, name)?;
+    let (buffer, buffer_size, file, texture, texture_desc) = Self::open_file(ctx, name)?;
     Ok(Self {
       buffer,
       buffer_size,
       file,
       texture,
+      texture_desc,
       ctx,
       last_pointer_shape_buffer: Vec::new(),
       last_pointer_shape_buffer_size: 0,
@@ -67,8 +71,14 @@ impl<'a> SharedCapturer<'a> {
   fn allocate(
     ctx: &'a DuplicationContext,
     name: &str,
-  ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
-    let (texture, desc) = ctx.create_readable_texture()?;
+  ) -> Result<(
+    *mut u8,
+    usize,
+    HANDLE,
+    ID3D11Texture2D,
+    D3D11_TEXTURE2D_DESC,
+  )> {
+    let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer_size = desc.calc_buffer_size();
 
     unsafe {
@@ -91,15 +101,21 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("MapViewOfFile", e))?
       .0 as *mut u8;
-      Ok((buffer, buffer_size, file, texture))
+      Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
 
   fn open_file(
     ctx: &'a DuplicationContext,
     name: &str,
-  ) -> Result<(*mut u8, usize, HANDLE, ID3D11Texture2D)> {
-    let (texture, desc) = ctx.create_readable_texture()?;
+  ) -> Result<(
+    *mut u8,
+    usize,
+    HANDLE,
+    ID3D11Texture2D,
+    D3D11_TEXTURE2D_DESC,
+  )> {
+    let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer_size = desc.calc_buffer_size();
 
     unsafe {
@@ -115,7 +131,7 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("MapViewOfFile", e))?
       .0 as *mut u8;
-      Ok((buffer, buffer_size, file, texture))
+      Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
 
@@ -165,9 +181,12 @@ impl<'a> Capturer for SharedCapturer<'a> {
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    self
-      .ctx
-      .capture(self.buffer, self.buffer_size, &self.texture)
+    self.ctx.capture(
+      self.buffer,
+      self.buffer_size,
+      &self.texture,
+      &self.texture_desc,
+    )
   }
 
   fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -185,6 +204,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
       self.buffer,
       self.buffer_size,
       &self.texture,
+      &self.texture_desc,
       &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 
