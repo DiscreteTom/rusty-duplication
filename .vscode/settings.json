@@ -4,11 +4,14 @@
     "Dxgi",
     "HMONITOR",
     "IDXGI",
+    "MEMORYMAPPEDVIEW",
     "millis",
     "MONITORINFO",
     "nonoverlapping",
     "OUTDUPL",
+    "PCSTR",
     "println",
+    "READWRITE",
     "Unmap",
     "UNORM"
   ]
