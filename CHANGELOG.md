@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## v0.4.3
+
+- Fix: wrong c-style file name which cause https://github.com/DiscreteTom/HyperDesktopDuplication/issues/4.
 ## v0.4.2
 
 - Fix: copy memory using `mapped_surface.Pitch`. #7

@@ -3,6 +3,7 @@ use crate::duplication_context::DuplicationContext;
 use crate::error::Error;
 use crate::model::Result;
 use crate::utils::{FrameInfoExt, OutDuplDescExt};
+use std::ffi::CString;
 use std::slice;
 use windows::core::PCSTR;
 use windows::Win32::Foundation::{CloseHandle, HANDLE};
@@ -80,6 +81,7 @@ impl<'a> SharedCapturer<'a> {
   )> {
     let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer_size = desc.calc_buffer_size();
+    let name = CString::new(name).unwrap(); // https://github.com/DiscreteTom/HyperDesktopDuplication/issues/4
 
     unsafe {
       let file = CreateFileMappingA(
@@ -88,7 +90,7 @@ impl<'a> SharedCapturer<'a> {
         PAGE_READWRITE,
         0,
         buffer_size as u32,
-        PCSTR(name.as_ptr()),
+        PCSTR(name.as_ptr() as *const _),
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
