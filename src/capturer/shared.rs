@@ -94,14 +94,21 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      let buffer = MapViewOfFile(
+      let buffer = match MapViewOfFile(
         file,                // handle to map object
         FILE_MAP_ALL_ACCESS, // read/write permission
         0,
         0,
         buffer_size,
       )
-      .map_err(|e| Error::windows("MapViewOfFile", e))?
+      .map_err(|e| Error::windows("MapViewOfFile", e))
+      {
+        Ok(buffer) => buffer,
+        Err(e) => {
+          CloseHandle(file);
+          return Err(e);
+        }
+      }
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }
@@ -124,14 +131,21 @@ impl<'a> SharedCapturer<'a> {
       let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
         .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      let buffer = MapViewOfFile(
+      let buffer = match MapViewOfFile(
         file,                // handle to map object
         FILE_MAP_ALL_ACCESS, // read/write permission
         0,
         0,
         buffer_size,
       )
-      .map_err(|e| Error::windows("MapViewOfFile", e))?
+      .map_err(|e| Error::windows("MapViewOfFile", e))
+      {
+        Ok(buffer) => buffer,
+        Err(e) => {
+          CloseHandle(file);
+          return Err(e);
+        }
+      }
       .0 as *mut u8;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }

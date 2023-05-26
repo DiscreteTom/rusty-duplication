@@ -3,6 +3,8 @@
 ## v0.4.3
 
 - Fix: wrong c-style file name which cause https://github.com/DiscreteTom/HyperDesktopDuplication/issues/4.
+- Fix: unclosed file if `MapViewOfFile` failed.
+
 ## v0.4.2
 
 - Fix: copy memory using `mapped_surface.Pitch`. #7
