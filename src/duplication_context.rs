@@ -74,7 +74,8 @@ impl DuplicationContext {
   pub fn create_readable_texture(
     &self,
   ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
-    let desc = self.dxgi_outdupl_desc();
+    let dupl_desc = self.dxgi_outdupl_desc();
+    let output_desc = self.dxgi_output_desc()?;
 
     // create a readable texture description
     let texture_desc = D3D11_TEXTURE2D_DESC {
@@ -82,8 +83,16 @@ impl DuplicationContext {
       CPUAccessFlags: D3D11_CPU_ACCESS_READ,
       MiscFlags: D3D11_RESOURCE_MISC_FLAG::default(),
       Usage: D3D11_USAGE_STAGING, // A resource that supports data transfer (copy) from the GPU to the CPU.
-      Width: desc.ModeDesc.Width,
-      Height: desc.ModeDesc.Height,
+      Width: if output_desc.Rotation.0 == 2 || output_desc.Rotation.0 == 4 {
+        dupl_desc.ModeDesc.Height
+      } else {
+        dupl_desc.ModeDesc.Width
+      },
+      Height: if output_desc.Rotation.0 == 2 || output_desc.Rotation.0 == 4 {
+        dupl_desc.ModeDesc.Width
+      } else {
+        dupl_desc.ModeDesc.Height
+      },
       MipLevels: 1,
       ArraySize: 1,
       Format: DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -107,7 +116,7 @@ impl DuplicationContext {
     // https://github.com/bryal/dxgcap-rs/blob/208d93368bc64aed783791242410459c878a10fb/src/lib.rs#L225
     unsafe { readable_texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
 
-    Ok((readable_texture, desc, texture_desc))
+    Ok((readable_texture, dupl_desc, texture_desc))
   }
 
   fn acquire_next_frame(

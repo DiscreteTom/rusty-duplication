@@ -1,8 +1,14 @@
 # CHANGELOG
 
+## v0.4.5
+
+- Fix: texture dimension when rotate screen.
+  - https://github.com/DiscreteTom/shremdup/issues/2
+  - https://github.com/DiscreteTom/HyperDesktopDuplication/issues/5
+
 ## v0.4.4
 
-- Fix wrong c-style file name when open shared memory.
+- Fix: wrong c-style file name when open shared memory.
 
 ## v0.4.3
 
