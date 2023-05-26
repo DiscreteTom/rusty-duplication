@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.4.4
+
+- Fix wrong c-style file name when open shared memory.
+
 ## v0.4.3
 
 - Fix: wrong c-style file name which cause https://github.com/DiscreteTom/HyperDesktopDuplication/issues/4.

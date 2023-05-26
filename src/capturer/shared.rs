@@ -81,7 +81,7 @@ impl<'a> SharedCapturer<'a> {
   )> {
     let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer_size = desc.calc_buffer_size();
-    let name = CString::new(name).unwrap(); // https://github.com/DiscreteTom/HyperDesktopDuplication/issues/4
+    let name = CString::new(name).unwrap(); // make the name null terminated
 
     unsafe {
       let file = CreateFileMappingA(
@@ -126,10 +126,15 @@ impl<'a> SharedCapturer<'a> {
   )> {
     let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer_size = desc.calc_buffer_size();
+    let name = CString::new(name).unwrap(); // make the name null terminated
 
     unsafe {
-      let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, PCSTR(name.as_ptr()))
-        .map_err(|e| Error::windows("CreateFileMappingA", e))?;
+      let file = OpenFileMappingA(
+        FILE_MAP_ALL_ACCESS.0,
+        false,
+        PCSTR(name.as_ptr() as *const _),
+      )
+      .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
       let buffer = match MapViewOfFile(
         file,                // handle to map object
