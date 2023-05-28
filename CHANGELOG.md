@@ -1,8 +1,9 @@
 # CHANGELOG
 
-## v0.4.6
+## v0.5.0
 
-- Fix: retrieve pointer shape when it's not updated.
+- **_Breaking Change_**: remove `Capturer.pointer_shape_updated`.
+- Fix: don't retrieve pointer shape when it's not updated.
 
 ## v0.4.5
 

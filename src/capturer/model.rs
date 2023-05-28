@@ -25,9 +25,6 @@ pub trait Capturer {
   /// Get the buffer of the captured pointer shape.
   fn pointer_shape_buffer(&self) -> &[u8];
 
-  /// Return true if the pointer shape is updated.
-  fn pointer_shape_updated(&self) -> bool;
-
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the `buffer`.
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;

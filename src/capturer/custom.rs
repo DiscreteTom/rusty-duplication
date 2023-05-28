@@ -16,8 +16,6 @@ pub struct CustomCapturer<'a> {
   ctx: &'a DuplicationContext,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
-  last_pointer_shape_buffer: Vec<u8>,
-  last_pointer_shape_buffer_size: usize,
   pointer_shape_buffer: Vec<u8>,
   pointer_shape_buffer_size: usize,
 }
@@ -34,8 +32,6 @@ impl<'a> CustomCapturer<'a> {
       ctx,
       texture,
       texture_desc,
-      last_pointer_shape_buffer: Vec::new(),
-      last_pointer_shape_buffer_size: 0,
       pointer_shape_buffer: Vec::new(),
       pointer_shape_buffer_size: 0,
     }
@@ -65,7 +61,6 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    // TODO: is this needed to be checked every time?
     if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
       Err(Error::new("Invalid buffer length"))
     } else {
@@ -75,13 +70,6 @@ impl Capturer for CustomCapturer<'_> {
 
   fn pointer_shape_buffer(&self) -> &[u8] {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
-  }
-
-  fn pointer_shape_updated(&self) -> bool {
-    self.pointer_shape_buffer_size != self.last_pointer_shape_buffer_size || {
-      let len = self.pointer_shape_buffer_size;
-      self.pointer_shape_buffer[..len] != self.last_pointer_shape_buffer[..len]
-    }
   }
 
   fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -109,23 +97,12 @@ impl Capturer for CustomCapturer<'_> {
       self.buffer.len(),
       &self.texture,
       &self.texture_desc,
-      &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
+      &mut self.pointer_shape_buffer,
     )?;
 
     if pointer_shape_info.is_some() {
       // record the pointer shape buffer size
-      // IMPORTANT: change last pointer shape buffer size
-      self.last_pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
-
-      // swap the pointer shape buffer
-      std::mem::swap(
-        &mut self.pointer_shape_buffer,
-        &mut self.last_pointer_shape_buffer,
-      );
-      std::mem::swap(
-        &mut self.pointer_shape_buffer_size,
-        &mut self.last_pointer_shape_buffer_size,
-      );
+      self.pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
     }
 
     Ok((frame_info, pointer_shape_info))
