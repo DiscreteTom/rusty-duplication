@@ -3,6 +3,8 @@ use windows::Win32::Graphics::{
   Gdi::MONITORINFO,
 };
 
+use crate::model::MouseUpdateStatus;
+
 pub trait OutputDescExt {
   fn width(&self) -> u32;
   fn height(&self) -> u32;
@@ -30,7 +32,8 @@ impl OutDuplDescExt for DXGI_OUTDUPL_DESC {
 
 pub trait FrameInfoExt {
   fn desktop_updated(&self) -> bool;
-  fn mouse_updated(&self) -> bool;
+  /// Return `(position_updated, shape_updated)`.
+  fn mouse_updated(&self) -> MouseUpdateStatus;
 }
 
 impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
@@ -38,9 +41,18 @@ impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
     self.LastPresentTime > 0
   }
 
-  /// Return true if mouse's shape or/and position is updated.
-  fn mouse_updated(&self) -> bool {
-    self.LastMouseUpdateTime > 0
+  fn mouse_updated(&self) -> MouseUpdateStatus {
+    if self.LastMouseUpdateTime > 0 {
+      MouseUpdateStatus {
+        position_updated: true,
+        shape_updated: self.PointerShapeBufferSize > 0,
+      }
+    } else {
+      MouseUpdateStatus {
+        position_updated: false,
+        shape_updated: false,
+      }
+    }
   }
 }
 
@@ -88,9 +100,12 @@ mod tests {
     assert!(!desc.desktop_updated());
     desc.LastPresentTime = 1;
     assert!(desc.desktop_updated());
-    assert!(!desc.mouse_updated());
+    assert!(!desc.mouse_updated().position_updated);
     desc.LastMouseUpdateTime = 1;
-    assert!(desc.mouse_updated());
+    assert!(desc.mouse_updated().position_updated);
+    assert!(!desc.mouse_updated().shape_updated);
+    desc.PointerShapeBufferSize = 1;
+    assert!(desc.mouse_updated().shape_updated);
   }
 
   #[test]

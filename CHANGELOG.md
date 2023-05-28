@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## v0.4.6
+
+- Fix: retrieve pointer shape when it's not updated.
+
 ## v0.4.5
 
 - Fix: texture dimension when rotate screen.

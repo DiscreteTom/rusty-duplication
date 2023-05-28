@@ -2,7 +2,7 @@ use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
 use crate::error::Error;
 use crate::model::Result;
-use crate::utils::{FrameInfoExt, OutDuplDescExt};
+use crate::utils::OutDuplDescExt;
 use std::ffi::CString;
 use std::slice;
 use windows::core::PCSTR;
@@ -229,7 +229,7 @@ impl<'a> Capturer for SharedCapturer<'a> {
       &mut self.last_pointer_shape_buffer, // IMPORTANT: write to last pointer shape buffer
     )?;
 
-    if frame_info.mouse_updated() {
+    if pointer_shape_info.is_some() {
       // record the pointer shape buffer size
       // IMPORTANT: change last pointer shape buffer size
       self.last_pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
@@ -312,7 +312,7 @@ mod tests {
 
     // check pointer shape
     let (frame_info, pointer_shape_info) = capturer.safe_capture_with_pointer_shape().unwrap();
-    assert!(frame_info.mouse_updated());
+    assert!(frame_info.mouse_updated().position_updated);
     assert!(pointer_shape_info.is_some());
     let pointer_shape_data = capturer.pointer_shape_buffer();
     // make sure pointer shape buffer is not all zero
