@@ -11,7 +11,7 @@ use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::System::Memory::{
   CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
-  MEMORYMAPPEDVIEW_HANDLE,
+  MEMORY_MAPPED_VIEW_ADDRESS,
 };
 use windows::Win32::{
   Foundation::INVALID_HANDLE_VALUE,
@@ -88,22 +88,20 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      let buffer = match MapViewOfFile(
+      // Call MapViewOfFile and check for failure:
+      let buffer_ptr = MapViewOfFile(
         file,                // handle to map object
         FILE_MAP_ALL_ACCESS, // read/write permission
         0,
         0,
         buffer_size,
-      )
-      .map_err(|e| Error::windows("MapViewOfFile", e))
-      {
-        Ok(buffer) => buffer,
-        Err(e) => {
-          CloseHandle(file);
-          return Err(e);
-        }
+      );
+
+      if buffer_ptr.Value.is_null() {
+        CloseHandle(file);
+        return Err(Error::new("MapViewOfFile returned null"));
       }
-      .0 as *mut u8;
+      let buffer = buffer_ptr.Value as *mut u8;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
@@ -130,30 +128,29 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      let buffer = match MapViewOfFile(
+      let buffer_ptr = MapViewOfFile(
         file,                // handle to map object
         FILE_MAP_ALL_ACCESS, // read/write permission
         0,
         0,
         buffer_size,
-      )
-      .map_err(|e| Error::windows("MapViewOfFile", e))
-      {
-        Ok(buffer) => buffer,
-        Err(e) => {
-          CloseHandle(file);
-          return Err(e);
-        }
+      );
+
+      if buffer_ptr.Value.is_null() {
+        CloseHandle(file);
+        return Err(Error::new("MapViewOfFile returned null"));
       }
-      .0 as *mut u8;
+      let buffer = buffer_ptr.Value as *mut u8;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
 
   fn free(&self) {
     unsafe {
-      UnmapViewOfFile(MEMORYMAPPEDVIEW_HANDLE(self.buffer as isize));
-      CloseHandle(self.file);
+      let _ = UnmapViewOfFile(MEMORY_MAPPED_VIEW_ADDRESS {
+        Value: self.buffer as *mut core::ffi::c_void,
+      });
+      let _ = CloseHandle(self.file);
     }
   }
 }
