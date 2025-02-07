@@ -98,7 +98,7 @@ impl<'a> SharedCapturer<'a> {
       );
 
       if buffer_ptr.Value.is_null() {
-        CloseHandle(file);
+        let _ = CloseHandle(file);
         return Err(Error::new("MapViewOfFile returned null"));
       }
       let buffer = buffer_ptr.Value as *mut u8;
@@ -137,7 +137,7 @@ impl<'a> SharedCapturer<'a> {
       );
 
       if buffer_ptr.Value.is_null() {
-        CloseHandle(file);
+        let _ = CloseHandle(file);
         return Err(Error::new("MapViewOfFile returned null"));
       }
       let buffer = buffer_ptr.Value as *mut u8;
