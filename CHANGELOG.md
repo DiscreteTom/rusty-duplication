@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FrameInfoExt::pointer_shape_updated`.
 - `Capturer::monitor`.
 - `Capturer::capture_unchecked` and `Capturer::capture_with_pointer_shape_unchecked`.
-- `Capturer::new`, `Capturer::try_into` for `VecCapturer`, `Capturer::create` and `Capturer::open` for `SharedCapturer`.
+- `Capturer::new`, `Capturer::try_into` for `VecCapturer`, `Capturer::create` and `Capturer::open` for `SharedMemoryCapturer`.
 - `SharedMemory`.
 - `CapturerBuffer`.
 
@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Capturer::capture` and `Capturer::capture_with_pointer_shape` are safe now.
 - `Capture` is now a struct instead of a trait.
 - Rename `SimpleCapturer` to `VecCapturer`.
+- Rename `SharedCapturer` to `SharedMemoryCapturer`.
 
 ### Removed
 
