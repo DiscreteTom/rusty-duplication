@@ -8,7 +8,7 @@ use windows::{
     Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE},
     Graphics::{
       Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
-      Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC},
+      Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
     },
     System::Memory::{
       CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
@@ -148,12 +148,8 @@ impl SharedCapturer {
 }
 
 impl Capturer for SharedCapturer {
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.monitor.dxgi_output_desc()
-  }
-
-  fn dxgi_outdupl_desc(&self) -> windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC {
-    self.monitor.dxgi_outdupl_desc()
+  fn monitor(&self) -> &Monitor {
+    &self.monitor
   }
 
   fn buffer(&self) -> &[u8] {
@@ -165,7 +161,7 @@ impl Capturer for SharedCapturer {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer_size < self.dxgi_outdupl_desc().calc_buffer_size() {
+    if self.buffer_size < self.monitor.dxgi_outdupl_desc().calc_buffer_size() {
       Err(Error::InvalidBufferLength)
     } else {
       Ok(())

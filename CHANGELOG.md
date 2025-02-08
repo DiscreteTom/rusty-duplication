@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `Scanner` to create `Monitor`.
 - `FrameInfoExt::pointer_shape_updated`.
+- `Capturer::monitor`.
 
 ### Changed
 
@@ -26,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Monitor::create_readable_texture`, `Monitor::capture`, `Monitor::capture_with_pointer_shape`, `Monitor::next_frame` and `Monitor::next_frame_with_pointer_shape`.
 - `MouseUpdateStatus`. Use `FrameInfoExt::mouse_updated` and `FrameInfoExt::pointer_shape_updated` instead.
 - `Monitor::simple_capturer`, `Monitor::shared_capturer`, `Monitor::shared_capturer_open`, `Monitor::custom_capturer`. Use capturer's `new` to create capturers.
+- `Capturer::dxgi_output_desc` and `Capturer::dxgi_outdupl_desc`. Use `Capturer::monitor` instead.
 
 ## [0.5.0] - 2023-05-08
 

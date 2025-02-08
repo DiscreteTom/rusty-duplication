@@ -1,15 +1,9 @@
-use crate::Result;
-use windows::Win32::Graphics::Dxgi::{
-  DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
-};
+use crate::{Monitor, Result};
+use windows::Win32::Graphics::Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO};
 
 /// Capturer is stateful, it holds a buffer of the last captured frame.
 pub trait Capturer {
-  /// This is usually used to get the screen's position and size.
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC>;
-
-  /// This is usually used to get the screen's pixel width/height and buffer size.
-  fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC;
+  fn monitor(&self) -> &Monitor;
 
   /// Get the buffer of the last captured frame.
   /// The buffer is in BGRA32 format.

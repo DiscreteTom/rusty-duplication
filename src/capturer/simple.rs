@@ -2,9 +2,7 @@ use super::{capture, model::Capturer};
 use crate::{Error, Monitor, OutDuplDescExt, Result};
 use windows::Win32::Graphics::{
   Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
-  Dxgi::{
-    DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
-  },
+  Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
 };
 
 /// Capture screen to a `Vec<u8>`.
@@ -40,12 +38,8 @@ impl SimpleCapturer {
 }
 
 impl Capturer for SimpleCapturer {
-  fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.monitor.dxgi_output_desc()
-  }
-
-  fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
-    self.monitor.dxgi_outdupl_desc()
+  fn monitor(&self) -> &Monitor {
+    &self.monitor
   }
 
   fn buffer(&self) -> &[u8] {
@@ -57,7 +51,7 @@ impl Capturer for SimpleCapturer {
   }
 
   fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
+    if self.buffer.len() < self.monitor.dxgi_outdupl_desc().calc_buffer_size() {
       Err(Error::InvalidBufferLength)
     } else {
       Ok(())
