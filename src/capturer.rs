@@ -56,8 +56,10 @@ pub trait Capturer {
   /// The pixel data is stored in the [`Capturer::buffer`].
   ///
   /// This will call [`Capturer::check_buffer`] to check the buffer size.
-  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
-
+  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    self.check_buffer()?;
+    unsafe { self.capture_unchecked(timeout_ms) }
+  }
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the [`Capturer::buffer`].
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
@@ -80,7 +82,10 @@ pub trait Capturer {
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
-  )>;
+  )> {
+    self.check_buffer()?;
+    unsafe { self.capture_with_pointer_shape_unchecked(timeout_ms) }
+  }
 }
 
 /// Capture the next frame to the provided buffer.

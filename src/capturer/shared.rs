@@ -180,11 +180,6 @@ impl Capturer for SharedCapturer {
     Ok(frame_info)
   }
 
-  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    self.check_buffer()?;
-    unsafe { self.capture_unchecked(timeout_ms) }
-  }
-
   unsafe fn capture_with_pointer_shape_unchecked(
     &mut self,
     timeout_ms: u32,
@@ -206,17 +201,6 @@ impl Capturer for SharedCapturer {
     )?;
 
     Ok((frame_info, pointer_shape_info))
-  }
-
-  fn capture_with_pointer_shape(
-    &mut self,
-    timeout_ms: u32,
-  ) -> Result<(
-    DXGI_OUTDUPL_FRAME_INFO,
-    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
-  )> {
-    self.check_buffer()?;
-    unsafe { self.capture_with_pointer_shape_unchecked(timeout_ms) }
   }
 }
 
