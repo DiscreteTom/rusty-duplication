@@ -48,7 +48,7 @@ impl Monitor {
   pub fn monitor_info(&self) -> Result<MONITORINFO> {
     let h_monitor = self.dxgi_output_desc()?.Monitor;
     let mut info = MONITORINFO {
-      cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+      cbSize: size_of::<MONITORINFO>() as u32,
       ..Default::default()
     };
     if unsafe { GetMonitorInfoW(h_monitor, &mut info).as_bool() } {
