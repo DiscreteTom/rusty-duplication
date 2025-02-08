@@ -1,18 +1,19 @@
-use super::capture;
+use super::CapturerBuffer;
 use crate::{Capturer, Monitor, OutDuplDescExt, Result};
-use windows::Win32::Graphics::{
-  Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
-  Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
-};
+use windows::Win32::Graphics::Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC};
+
+impl CapturerBuffer for Vec<u8> {
+  fn as_bytes(&self) -> &[u8] {
+    self
+  }
+
+  fn as_bytes_mut(&mut self) -> &mut [u8] {
+    self
+  }
+}
 
 /// Capture screen to a `Vec<u8>`.
-pub struct VecCapturer {
-  buffer: Vec<u8>,
-  monitor: Monitor,
-  texture: ID3D11Texture2D,
-  texture_desc: D3D11_TEXTURE2D_DESC,
-  pointer_shape_buffer: Vec<u8>,
-}
+pub type VecCapturer = Capturer<Vec<u8>>;
 
 impl VecCapturer {
   pub fn new(monitor: Monitor) -> Result<Self> {
@@ -35,78 +36,10 @@ impl VecCapturer {
   }
 }
 
-impl Capturer for VecCapturer {
-  fn monitor(&self) -> &Monitor {
-    &self.monitor
-  }
-
-  fn texture(&self) -> &ID3D11Texture2D {
-    &self.texture
-  }
-
-  fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
-    &self.texture_desc
-  }
-
-  fn buffer(&self) -> &[u8] {
-    &self.buffer
-  }
-
-  fn buffer_mut(&mut self) -> &mut [u8] {
-    &mut self.buffer
-  }
-
-  fn pointer_shape_buffer(&self) -> &[u8] {
-    &self.pointer_shape_buffer
-  }
-
-  fn pointer_shape_buffer_mut(&mut self) -> &mut [u8] {
-    &mut self.pointer_shape_buffer
-  }
-
-  unsafe fn capture_unchecked(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
-
-    unsafe {
-      capture(
-        &self.texture,
-        self.buffer.as_mut_ptr(),
-        self.buffer.len(),
-        &self.texture_desc,
-      )?;
-    }
-
-    Ok(frame_info)
-  }
-
-  unsafe fn capture_with_pointer_shape_unchecked(
-    &mut self,
-    timeout_ms: u32,
-  ) -> Result<(
-    DXGI_OUTDUPL_FRAME_INFO,
-    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
-  )> {
-    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
-      timeout_ms,
-      &self.texture,
-      &mut self.pointer_shape_buffer,
-    )?;
-
-    capture(
-      &self.texture,
-      self.buffer.as_mut_ptr(),
-      self.buffer.len(),
-      &self.texture_desc,
-    )?;
-
-    Ok((frame_info, pointer_shape_info))
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{Capturer, FrameInfoExt, Scanner};
+  use crate::{FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
@@ -122,7 +55,7 @@ mod tests {
     let info = capturer.capture(300).unwrap();
     assert!(info.desktop_updated());
 
-    let buffer = capturer.buffer();
+    let buffer = capturer.buffer.as_bytes();
     // ensure buffer not all zero
     let mut all_zero = true;
     for i in 0..buffer.len() {
@@ -140,7 +73,7 @@ mod tests {
     let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape(300).unwrap();
     assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
-    let pointer_shape_data = capturer.pointer_shape_buffer();
+    let pointer_shape_data = capturer.pointer_shape_buffer;
     // make sure pointer shape buffer is not all zero
     let mut all_zero = true;
     for i in 0..pointer_shape_data.len() {

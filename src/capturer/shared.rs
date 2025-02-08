@@ -1,4 +1,4 @@
-use super::capture;
+use super::CapturerBuffer;
 use crate::{Capturer, Error, Monitor, OutDuplDescExt, Result};
 use std::ffi::CString;
 use std::slice;
@@ -6,10 +6,7 @@ use windows::{
   core::PCSTR,
   Win32::{
     Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE},
-    Graphics::{
-      Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
-      Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
-    },
+    Graphics::Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
     System::Memory::{
       CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
       MEMORY_MAPPED_VIEW_ADDRESS, PAGE_READWRITE,
@@ -17,24 +14,48 @@ use windows::{
   },
 };
 
-/// Capture screen to a chunk of shared memory.
-pub struct SharedCapturer {
+#[derive(Debug)]
+pub struct SharedMemory {
   buffer: *mut u8,
   buffer_size: usize,
   file: HANDLE,
-  monitor: Monitor,
-  texture: ID3D11Texture2D,
-  texture_desc: D3D11_TEXTURE2D_DESC,
-  pointer_shape_buffer: Vec<u8>,
 }
+
+impl CapturerBuffer for SharedMemory {
+  fn as_bytes(&self) -> &[u8] {
+    unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
+  }
+
+  fn as_bytes_mut(&mut self) -> &mut [u8] {
+    unsafe { slice::from_raw_parts_mut(self.buffer, self.buffer_size) }
+  }
+}
+
+impl Drop for SharedMemory {
+  fn drop(&mut self) {
+    // TODO: add debug log
+    unsafe {
+      UnmapViewOfFile(MEMORY_MAPPED_VIEW_ADDRESS {
+        Value: self.buffer as _,
+      })
+      .ok();
+      CloseHandle(self.file).ok();
+    }
+  }
+}
+
+/// Capture screen to a chunk of shared memory.
+pub type SharedCapturer = Capturer<SharedMemory>;
 
 impl SharedCapturer {
   pub fn new(monitor: Monitor, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(&monitor, name)?;
     Ok(Self {
-      buffer,
-      buffer_size,
-      file,
+      buffer: SharedMemory {
+        buffer,
+        buffer_size,
+        file,
+      },
       texture,
       texture_desc,
       monitor,
@@ -45,9 +66,11 @@ impl SharedCapturer {
   pub fn open(monitor: Monitor, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture, texture_desc) = Self::open_file(&monitor, name)?;
     Ok(Self {
-      buffer,
-      buffer_size,
-      file,
+      buffer: SharedMemory {
+        buffer,
+        buffer_size,
+        file,
+      },
       texture,
       texture_desc,
       monitor,
@@ -116,16 +139,6 @@ impl SharedCapturer {
     }
   }
 
-  fn free(&self) {
-    unsafe {
-      UnmapViewOfFile(MEMORY_MAPPED_VIEW_ADDRESS {
-        Value: self.buffer as _,
-      })
-      .ok();
-      CloseHandle(self.file).ok();
-    }
-  }
-
   unsafe fn map_view_of_file(file: HANDLE, buffer_size: usize) -> Result<*mut u8> {
     let buffer_ptr = MapViewOfFile(
       file,                // handle to map object
@@ -144,84 +157,10 @@ impl SharedCapturer {
   }
 }
 
-impl Capturer for SharedCapturer {
-  fn monitor(&self) -> &Monitor {
-    &self.monitor
-  }
-
-  fn texture(&self) -> &ID3D11Texture2D {
-    &self.texture
-  }
-
-  fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
-    &self.texture_desc
-  }
-
-  fn buffer(&self) -> &[u8] {
-    unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
-  }
-
-  fn buffer_mut(&mut self) -> &mut [u8] {
-    unsafe { slice::from_raw_parts_mut(self.buffer, self.buffer_size) }
-  }
-
-  fn pointer_shape_buffer(&self) -> &[u8] {
-    &self.pointer_shape_buffer
-  }
-
-  fn pointer_shape_buffer_mut(&mut self) -> &mut [u8] {
-    &mut self.pointer_shape_buffer
-  }
-
-  unsafe fn capture_unchecked(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
-
-    unsafe {
-      capture(
-        &self.texture,
-        self.buffer,
-        self.buffer_size,
-        &self.texture_desc,
-      )?;
-    }
-
-    Ok(frame_info)
-  }
-
-  unsafe fn capture_with_pointer_shape_unchecked(
-    &mut self,
-    timeout_ms: u32,
-  ) -> Result<(
-    DXGI_OUTDUPL_FRAME_INFO,
-    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
-  )> {
-    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
-      timeout_ms,
-      &self.texture,
-      &mut self.pointer_shape_buffer,
-    )?;
-
-    capture(
-      &self.texture,
-      self.buffer,
-      self.buffer_size,
-      &self.texture_desc,
-    )?;
-
-    Ok((frame_info, pointer_shape_info))
-  }
-}
-
-impl Drop for SharedCapturer {
-  fn drop(&mut self) {
-    self.free()
-  }
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{Capturer, FrameInfoExt, Scanner};
+  use crate::{FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
@@ -237,7 +176,7 @@ mod tests {
     let info = capturer.capture(300).unwrap();
     assert!(info.desktop_updated());
 
-    let buffer = capturer.buffer();
+    let buffer = capturer.buffer.as_bytes();
     // ensure buffer not all zero
     let mut all_zero = true;
     for i in 0..buffer.len() {
@@ -255,7 +194,7 @@ mod tests {
     let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape(300).unwrap();
     assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
-    let pointer_shape_data = capturer.pointer_shape_buffer();
+    let pointer_shape_data = capturer.pointer_shape_buffer;
     // make sure pointer shape buffer is not all zero
     let mut all_zero = true;
     for i in 0..pointer_shape_data.len() {
