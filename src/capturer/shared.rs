@@ -1,4 +1,4 @@
-use super::model::Capturer;
+use super::{capture, model::Capturer};
 use crate::{Error, Monitor, OutDuplDescExt, Result};
 use std::ffi::CString;
 use std::slice;
@@ -173,15 +173,13 @@ impl Capturer for SharedCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    let (frame, frame_info) = self.ctx.next_frame(timeout_ms, &self.texture)?;
+
     unsafe {
-      self.ctx.capture(
-        self.buffer,
-        self.buffer_size,
-        timeout_ms,
-        &self.texture,
-        &self.texture_desc,
-      )
+      capture(&frame, self.buffer, self.buffer_size, &self.texture_desc)?;
     }
+
+    Ok(frame_info)
   }
 
   fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -196,16 +194,13 @@ impl Capturer for SharedCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = unsafe {
-      self.ctx.capture_with_pointer_shape(
-        self.buffer,
-        self.buffer_size,
-        timeout_ms,
-        &self.texture,
-        &self.texture_desc,
-        &mut self.pointer_shape_buffer,
-      )
-    }?;
+    let (frame, frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+      timeout_ms,
+      &self.texture,
+      &mut self.pointer_shape_buffer,
+    )?;
+
+    unsafe { capture(&frame, self.buffer, self.buffer_size, &self.texture_desc) }?;
 
     if pointer_shape_info.is_some() {
       // record the pointer shape buffer size

@@ -1,4 +1,4 @@
-use super::model::Capturer;
+use super::{capture, model::Capturer};
 use crate::{Error, Monitor, OutDuplDescExt, Result};
 use windows::Win32::Graphics::{
   Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
@@ -67,15 +67,18 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    let (frame, frame_info) = self.ctx.next_frame(timeout_ms, &self.texture)?;
+
     unsafe {
-      self.ctx.capture(
+      capture(
+        &frame,
         self.buffer.as_mut_ptr(),
         self.buffer.len(),
-        timeout_ms,
-        &self.texture,
         &self.texture_desc,
-      )
+      )?;
     }
+
+    Ok(frame_info)
   }
 
   fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -90,14 +93,18 @@ impl Capturer for SimpleCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = unsafe {
-      self.ctx.capture_with_pointer_shape(
+    let (frame, frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+      timeout_ms,
+      &self.texture,
+      &mut self.pointer_shape_buffer,
+    )?;
+
+    unsafe {
+      capture(
+        &frame,
         self.buffer.as_mut_ptr(),
         self.buffer.len(),
-        timeout_ms,
-        &self.texture,
         &self.texture_desc,
-        &mut self.pointer_shape_buffer,
       )
     }?;
 

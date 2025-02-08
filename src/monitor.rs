@@ -1,5 +1,4 @@
 use crate::{Error, FrameInfoExt, Result};
-use std::ptr;
 use windows::{
   core::Interface,
   Win32::Graphics::{
@@ -9,9 +8,9 @@ use windows::{
     },
     Dxgi::{
       Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
-      IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, IDXGISurface1, DXGI_MAPPED_RECT,
-      DXGI_MAP_READ, DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
-      DXGI_OUTPUT_DESC, DXGI_RESOURCE_PRIORITY_MAXIMUM,
+      IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, IDXGISurface1, DXGI_OUTDUPL_DESC,
+      DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
+      DXGI_RESOURCE_PRIORITY_MAXIMUM,
     },
     Gdi::{GetMonitorInfoW, MONITORINFO},
   },
@@ -224,107 +223,12 @@ impl Monitor {
       })
       .and_then(|r| r)
   }
-
-  /// Capture the next frame to the provided buffer.
-  /// # Safety
-  /// This function will dereference the provided pointer.
-  /// The caller must ensure that the buffer is large enough to hold the frame.
-  pub(crate) unsafe fn capture(
-    &self,
-    dest: *mut u8,
-    len: usize,
-    timeout_ms: u32,
-    readable_texture: &ID3D11Texture2D,
-    texture_desc: &D3D11_TEXTURE2D_DESC,
-  ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let (frame, frame_info) = self.next_frame(timeout_ms, readable_texture)?;
-    let mut mapped_surface = DXGI_MAPPED_RECT::default();
-    let bytes_per_line = texture_desc.Width as usize * 4; // 4 for BGRA32
-
-    unsafe {
-      frame
-        .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
-      if mapped_surface.Pitch as usize == bytes_per_line {
-        ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-      } else {
-        // https://github.com/DiscreteTom/rusty-duplication/issues/7
-        // TODO: add a debug info here
-        let mut src_offset = 0;
-        let mut dest_offset = 0;
-        for _ in 0..texture_desc.Height {
-          let src = mapped_surface.pBits.offset(src_offset);
-          let dest = dest.offset(dest_offset);
-          ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
-
-          src_offset += mapped_surface.Pitch as isize;
-          dest_offset += bytes_per_line as isize;
-        }
-      }
-      frame
-        .Unmap()
-        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Unmap)))?;
-    }
-
-    Ok(frame_info)
-  }
-
-  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
-  /// and this will resize `pointer_shape_buffer` if needed and update it.
-  /// # Safety
-  /// This function will dereference the provided pointer.
-  /// The caller must ensure that the buffer is large enough to hold the frame.
-  pub(crate) unsafe fn capture_with_pointer_shape(
-    &self,
-    dest: *mut u8,
-    len: usize,
-    timeout_ms: u32,
-    readable_texture: &ID3D11Texture2D,
-    texture_desc: &D3D11_TEXTURE2D_DESC,
-    pointer_shape_buffer: &mut Vec<u8>,
-  ) -> Result<(
-    DXGI_OUTDUPL_FRAME_INFO,
-    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
-  )> {
-    let (frame, frame_info, pointer_shape_info) =
-      self.next_frame_with_pointer_shape(timeout_ms, readable_texture, pointer_shape_buffer)?;
-    let mut mapped_surface = DXGI_MAPPED_RECT::default();
-    let bytes_per_line = texture_desc.Width as usize * 4; // 4 for BGRA32
-
-    unsafe {
-      frame
-        .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
-      if mapped_surface.Pitch as usize == bytes_per_line {
-        ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
-      } else {
-        // https://github.com/DiscreteTom/rusty-duplication/issues/7
-        // TODO: add a debug info here
-        let mut src_offset = 0;
-        let mut dest_offset = 0;
-        for _ in 0..texture_desc.Height {
-          let src = mapped_surface.pBits.offset(src_offset);
-          let dest = dest.offset(dest_offset);
-          ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
-
-          src_offset += mapped_surface.Pitch as isize;
-          dest_offset += bytes_per_line as isize;
-        }
-      }
-      frame
-        .Unmap()
-        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Unmap)))?;
-    }
-
-    Ok((frame_info, pointer_shape_info))
-  }
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, Scanner};
+  use crate::{MonitorInfoExt, Scanner};
   use serial_test::serial;
-  use std::{thread, time::Duration};
 
   #[test]
   #[serial]
@@ -339,62 +243,5 @@ mod tests {
       }
     }
     assert_eq!(primary_monitor_count, 1);
-
-    let (texture, desc, texture_desc) = contexts[0].create_readable_texture().unwrap();
-    let mut buffer = vec![0u8; desc.calc_buffer_size()];
-
-    // sleep for a while before capture to wait system to update the screen
-    thread::sleep(Duration::from_millis(100));
-
-    let info = unsafe {
-      contexts[0].capture(
-        buffer.as_mut_ptr(),
-        buffer.len(),
-        300,
-        &texture,
-        &texture_desc,
-      )
-    }
-    .unwrap();
-    assert!(info.desktop_updated());
-
-    // ensure buffer not all zero
-    let mut all_zero = true;
-    for i in 0..buffer.len() {
-      if buffer[i] != 0 {
-        all_zero = false;
-        break;
-      }
-    }
-    assert!(!all_zero);
-
-    // sleep for a while before capture to wait system to update the mouse
-    thread::sleep(Duration::from_millis(1000));
-
-    // check pointer
-    let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
-    let (frame_info, pointer_shape_info) = unsafe {
-      contexts[0].capture_with_pointer_shape(
-        buffer.as_mut_ptr(),
-        buffer.len(),
-        300,
-        &texture,
-        &texture_desc,
-        &mut pointer_shape_buffer,
-      )
-    }
-    .unwrap();
-    assert!(frame_info.mouse_updated());
-    assert!(pointer_shape_info.is_some());
-
-    // ensure pointer_shape_buffer not all zero
-    let mut all_zero = true;
-    for i in 0..pointer_shape_buffer.len() {
-      if pointer_shape_buffer[i] != 0 {
-        all_zero = false;
-        break;
-      }
-    }
-    assert!(!all_zero);
   }
 }
