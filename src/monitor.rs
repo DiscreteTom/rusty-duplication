@@ -88,11 +88,9 @@ impl Monitor {
 
   pub(crate) fn create_texture(
     &self,
-  ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
-    // TODO: make these as param
-    let dupl_desc = self.dxgi_outdupl_desc();
-    let output_desc = self.dxgi_output_desc()?;
-
+    dupl_desc: &DXGI_OUTDUPL_DESC,
+    output_desc: &DXGI_OUTPUT_DESC,
+  ) -> Result<(ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
     // create a readable texture description
     let texture_desc = D3D11_TEXTURE2D_DESC {
       BindFlags: D3D11_BIND_FLAG::default().0 as u32,
@@ -132,7 +130,7 @@ impl Monitor {
     // https://github.com/bryal/dxgcap-rs/blob/208d93368bc64aed783791242410459c878a10fb/src/lib.rs#L225
     unsafe { texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
 
-    Ok((texture, dupl_desc, texture_desc))
+    Ok((texture, texture_desc))
   }
 
   /// Try to process the next frame with the provided `cb`.

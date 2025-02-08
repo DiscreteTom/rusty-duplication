@@ -33,7 +33,8 @@ impl<'a> CustomCapturer<'a> {
   }
 
   pub fn new(ctx: &'a Monitor, buffer: &'a mut [u8]) -> Result<Self> {
-    let (texture, _desc, texture_desc) = ctx.create_texture()?;
+    let (texture, texture_desc) =
+      ctx.create_texture(&ctx.dxgi_outdupl_desc(), &ctx.dxgi_output_desc()?)?;
     Ok(Self::with_texture(ctx, buffer, texture, texture_desc))
   }
 }

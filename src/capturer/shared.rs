@@ -68,8 +68,9 @@ impl<'a> SharedCapturer<'a> {
     ID3D11Texture2D,
     D3D11_TEXTURE2D_DESC,
   )> {
-    let (texture, desc, texture_desc) = ctx.create_texture()?;
-    let buffer_size = desc.calc_buffer_size();
+    let dupl_desc = ctx.dxgi_outdupl_desc();
+    let (texture, texture_desc) = ctx.create_texture(&dupl_desc, &ctx.dxgi_output_desc()?)?;
+    let buffer_size = dupl_desc.calc_buffer_size();
     let name = CString::new(name).unwrap(); // make the name null terminated
 
     unsafe {
@@ -98,8 +99,9 @@ impl<'a> SharedCapturer<'a> {
     ID3D11Texture2D,
     D3D11_TEXTURE2D_DESC,
   )> {
-    let (texture, desc, texture_desc) = ctx.create_texture()?;
-    let buffer_size = desc.calc_buffer_size();
+    let dupl_desc = ctx.dxgi_outdupl_desc();
+    let (texture, texture_desc) = ctx.create_texture(&dupl_desc, &ctx.dxgi_output_desc()?)?;
+    let buffer_size = dupl_desc.calc_buffer_size();
     let name = CString::new(name).unwrap(); // make the name null terminated
 
     unsafe {
