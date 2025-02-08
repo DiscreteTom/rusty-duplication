@@ -1,6 +1,5 @@
 use super::CapturerBuffer;
-use crate::{Capturer, Monitor, OutDuplDescExt, Result};
-use windows::Win32::Graphics::Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC};
+use crate::{Capturer, Error, Monitor, Result};
 
 impl CapturerBuffer for Vec<u8> {
   fn as_bytes(&self) -> &[u8] {
@@ -13,26 +12,20 @@ impl CapturerBuffer for Vec<u8> {
 }
 
 /// Capture screen to a `Vec<u8>`.
+/// # Examples
+/// ```
+/// use rusty_duplication::{Scanner, VecCapturer};
+///
+/// let monitor = Scanner::new().unwrap().next().unwrap();
+/// let mut capturer: VecCapturer = monitor.try_into().unwrap();
+/// ```
 pub type VecCapturer = Capturer<Vec<u8>>;
 
-impl VecCapturer {
-  pub fn new(monitor: Monitor) -> Result<Self> {
-    let (buffer, texture, texture_desc) = Self::allocate(&monitor)?;
-    Ok(Self {
-      buffer,
-      monitor,
-      texture,
-      texture_desc,
-      pointer_shape_buffer: Vec::new(),
-    })
-  }
+impl TryFrom<Monitor> for VecCapturer {
+  type Error = Error;
 
-  fn allocate(monitor: &Monitor) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
-    let dupl_desc = monitor.dxgi_outdupl_desc();
-    let (texture, texture_desc) =
-      monitor.create_texture(&dupl_desc, &monitor.dxgi_output_desc()?)?;
-    let buffer = vec![0u8; dupl_desc.calc_buffer_size()];
-    Ok((buffer, texture, texture_desc))
+  fn try_from(monitor: Monitor) -> Result<Self> {
+    Capturer::new(monitor, |size| vec![0u8; size])
   }
 }
 
@@ -47,7 +40,7 @@ mod tests {
   #[serial]
   fn simple_capturer() {
     let monitor = Scanner::new().unwrap().next().unwrap();
-    let mut capturer = VecCapturer::new(monitor).unwrap();
+    let mut capturer: VecCapturer = monitor.try_into().unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

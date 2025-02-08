@@ -48,7 +48,7 @@ impl Drop for SharedMemory {
 pub type SharedCapturer = Capturer<SharedMemory>;
 
 impl SharedCapturer {
-  pub fn new(monitor: Monitor, name: &str) -> Result<Self> {
+  pub fn create(monitor: Monitor, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(&monitor, name)?;
     Ok(Self {
       buffer: SharedMemory {
@@ -168,7 +168,7 @@ mod tests {
   #[serial]
   fn shared_capturer() {
     let monitor = Scanner::new().unwrap().next().unwrap();
-    let mut capturer = SharedCapturer::new(monitor, "RustyDuplicationTest").unwrap();
+    let mut capturer = SharedCapturer::create(monitor, "RustyDuplicationTest").unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
