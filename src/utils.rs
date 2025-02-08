@@ -67,7 +67,7 @@ impl MonitorInfoExt for MONITORINFO {
 
 #[cfg(test)]
 mod tests {
-  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, OutputDescExt};
+  use super::*;
   use windows::Win32::Graphics::{
     Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
     Gdi::MONITORINFO,
