@@ -28,7 +28,7 @@ pub struct Monitor {
 
 impl Monitor {
   #[inline]
-  pub const fn new(
+  pub(crate) fn new(
     device: ID3D11Device,
     device_context: ID3D11DeviceContext,
     output: IDXGIOutput1,
