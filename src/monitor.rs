@@ -135,13 +135,13 @@ impl Monitor {
     Ok((readable_texture, dupl_desc, texture_desc))
   }
 
-  /// # Caveats
-  /// Remember to call `release_frame` after `acquire_next_frame`.
-  fn acquire_next_frame(
+  /// Try to process the next frame with the provided `cb`.
+  fn process_next_frame<R>(
     &self,
     timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
-  ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
+    cb: impl FnOnce((IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)) -> R,
+  ) -> Result<R> {
     // acquire GPU texture
     let mut frame_info = DXGI_OUTDUPL_FRAME_INFO::default();
     let mut resource: Option<IDXGIResource> = None;
@@ -156,15 +156,16 @@ impl Monitor {
     let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy GPU texture to readable texture
+    // TODO: is this needed?
     unsafe { self.device_context.CopyResource(readable_texture, &texture) };
 
-    Ok((readable_texture.cast().unwrap(), frame_info))
-  }
+    let r = cb((readable_texture.cast().unwrap(), frame_info));
 
-  fn release_frame(&self) -> Result<()> {
     unsafe { self.output_duplication.ReleaseFrame() }.map_err(Error::from_win_err(stringify!(
       IDXGIOutputDuplication.ReleaseFrame
-    )))
+    )))?;
+
+    Ok(r)
   }
 
   /// Get the next frame without pointer shape.
@@ -175,9 +176,7 @@ impl Monitor {
     timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
   ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
-    let (surface, frame_info) = self.acquire_next_frame(timeout_ms, readable_texture)?;
-    self.release_frame()?;
-    Ok((surface, frame_info))
+    self.process_next_frame(timeout_ms, readable_texture, |r| r)
   }
 
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
@@ -192,40 +191,38 @@ impl Monitor {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (surface, frame_info) = self.acquire_next_frame(timeout_ms, readable_texture)?;
+    self
+      .process_next_frame(timeout_ms, readable_texture, |(surface, frame_info)| {
+        if !frame_info.pointer_shape_updated() {
+          return Ok((surface, frame_info, None));
+        }
 
-    if !frame_info.pointer_shape_updated() {
-      self.release_frame()?;
-      return Ok((surface, frame_info, None));
-    }
+        // resize buffer if needed
+        let pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
+        if pointer_shape_buffer.len() < pointer_shape_buffer_size {
+          pointer_shape_buffer.resize(pointer_shape_buffer_size, 0);
+        }
 
-    // resize buffer if needed
-    let pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
-    if pointer_shape_buffer.len() < pointer_shape_buffer_size {
-      pointer_shape_buffer.resize(pointer_shape_buffer_size, 0);
-    }
+        // get pointer shape
+        let mut size: u32 = 0;
+        let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
+        unsafe {
+          self.output_duplication.GetFramePointerShape(
+            pointer_shape_buffer.len() as u32,
+            pointer_shape_buffer.as_mut_ptr() as *mut _,
+            &mut size,
+            &mut pointer_shape_info,
+          )
+        }
+        .map_err(Error::from_win_err(stringify!(
+          IDXGIOutputDuplication.GetFramePointerShape
+        )))?;
+        // fix buffer size
+        pointer_shape_buffer.truncate(size as usize);
 
-    // get pointer shape
-    let mut size: u32 = 0;
-    let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
-    let r = unsafe {
-      self.output_duplication.GetFramePointerShape(
-        pointer_shape_buffer.len() as u32,
-        pointer_shape_buffer.as_mut_ptr() as *mut _,
-        &mut size,
-        &mut pointer_shape_info,
-      )
-    }
-    .map_err(Error::from_win_err(stringify!(
-      IDXGIOutputDuplication.GetFramePointerShape
-    )));
-    pointer_shape_buffer.truncate(size as usize);
-    self.release_frame()?;
-
-    match r {
-      Ok(_) => Ok((surface, frame_info, Some(pointer_shape_info))),
-      Err(e) => Err(e),
-    }
+        Ok((surface, frame_info, Some(pointer_shape_info)))
+      })
+      .and_then(|r| r)
   }
 
   pub fn capture(
