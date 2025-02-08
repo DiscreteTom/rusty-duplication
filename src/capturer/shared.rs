@@ -148,7 +148,7 @@ impl<'a> SharedCapturer<'a> {
   }
 }
 
-impl<'a> Capturer for SharedCapturer<'a> {
+impl Capturer for SharedCapturer<'_> {
   fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     self.ctx.dxgi_output_desc()
   }
@@ -234,7 +234,7 @@ impl DuplicationContext {
   }
 }
 
-impl<'a> Drop for SharedCapturer<'a> {
+impl Drop for SharedCapturer<'_> {
   fn drop(&mut self) {
     self.free()
   }

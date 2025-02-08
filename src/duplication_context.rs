@@ -47,8 +47,10 @@ impl DuplicationContext {
 
   pub fn monitor_info(&self) -> Result<MONITORINFO> {
     let h_monitor = self.dxgi_output_desc()?.Monitor;
-    let mut info = MONITORINFO::default();
-    info.cbSize = std::mem::size_of::<MONITORINFO>() as u32;
+    let mut info = MONITORINFO {
+      cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+      ..Default::default()
+    };
     if unsafe { GetMonitorInfoW(h_monitor, &mut info).as_bool() } {
       Ok(info)
     } else {
@@ -192,7 +194,7 @@ impl DuplicationContext {
       }
       Err(e) => {
         self.release_frame()?;
-        return Err(e);
+        Err(e)
       }
     }
   }

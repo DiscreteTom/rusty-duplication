@@ -53,11 +53,11 @@ impl Manager {
           Ok(output) => outputs.push(output),
         }
       }
-      if outputs.len() > 0 {
+      if !outputs.is_empty() {
         adapter_outputs.push((adapter, outputs))
       }
     }
-    if adapter_outputs.len() == 0 {
+    if adapter_outputs.is_empty() {
       return Err(Error::new("No output"));
     }
 

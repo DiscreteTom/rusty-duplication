@@ -53,11 +53,11 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn buffer(&self) -> &[u8] {
-    &self.buffer
+    self.buffer
   }
 
   fn buffer_mut(&mut self) -> &mut [u8] {
-    &mut self.buffer
+    self.buffer
   }
 
   fn check_buffer(&self) -> Result<()> {
