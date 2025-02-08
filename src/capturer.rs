@@ -57,11 +57,12 @@ impl<Buffer> Capturer<Buffer> {
     &self.monitor
   }
 
-  /// Check buffer size.
+  /// Ensure [`Self::buffer`] is large enough to hold the frame.
   pub fn check_buffer(&self) -> Result<()>
   where
     Buffer: CapturerBuffer,
   {
+    // TODO: can we cache the result of `self.monitor.dxgi_outdupl_desc().calc_buffer_size()`?
     if self.buffer.as_bytes().len() < self.monitor.dxgi_outdupl_desc().calc_buffer_size() {
       Err(Error::InvalidBufferLength)
     } else {
@@ -70,10 +71,10 @@ impl<Buffer> Capturer<Buffer> {
   }
 
   /// Capture the screen and return the frame info.
-  /// The pixel data is stored in the [`Capturer::buffer`].
+  /// The pixel data is stored in the [`Self::buffer`].
   /// # Safety
-  /// You have to ensure [`Capturer::buffer`] is large enough to hold the frame.
-  /// You can use [`Capturer::check_buffer`] to check the buffer size.
+  /// You have to ensure [`Self::buffer`] is large enough to hold the frame.
+  /// You can use [`Self::check_buffer`] to check the buffer size.
   pub unsafe fn capture_unchecked(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>
   where
     Buffer: CapturerBuffer,
@@ -89,9 +90,9 @@ impl<Buffer> Capturer<Buffer> {
     Ok(frame_info)
   }
   /// Capture the screen and return the frame info.
-  /// The pixel data is stored in the [`Capturer::buffer`].
+  /// The pixel data is stored in the [`Self::buffer`].
   ///
-  /// This will call [`Capturer::check_buffer`] to check the buffer size.
+  /// This will call [`Self::check_buffer`] to check the buffer size.
   #[inline]
   pub fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>
   where
@@ -102,13 +103,13 @@ impl<Buffer> Capturer<Buffer> {
   }
 
   /// Capture the screen and return the frame info.
-  /// The pixel data is stored in the [`Capturer::buffer`].
+  /// The pixel data is stored in the [`Self::buffer`].
   ///
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
-  /// The pointer shape is stored in the [`Capturer::pointer_shape_buffer`].
+  /// The pointer shape is stored in the [`Self::pointer_shape_buffer`].
   /// # Safety
-  /// You have to ensure [`Capturer::buffer`] is large enough to hold the frame.
-  /// You can use [`Capturer::check_buffer`] to check the buffer size.
+  /// You have to ensure [`Self::buffer`] is large enough to hold the frame.
+  /// You can use [`Self::check_buffer`] to check the buffer size.
   pub unsafe fn capture_with_pointer_shape_unchecked(
     &mut self,
     timeout_ms: u32,
@@ -135,12 +136,12 @@ impl<Buffer> Capturer<Buffer> {
   }
 
   /// Check buffer size before capture.
-  /// The pixel data is stored in the [`Capturer::buffer`].
+  /// The pixel data is stored in the [`Self::buffer`].
   ///
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
-  /// The pointer shape is stored in the [`Capturer::pointer_shape_buffer`].
+  /// The pointer shape is stored in the [`Self::pointer_shape_buffer`].
   ///
-  /// This will call [`Capturer::check_buffer`] to check the buffer size.
+  /// This will call [`Self::check_buffer`] to check the buffer size.
   #[inline]
   pub fn capture_with_pointer_shape(
     &mut self,
