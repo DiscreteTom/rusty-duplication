@@ -154,7 +154,6 @@ impl Monitor {
     let new_texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy texture using GPU
-    // TODO: is this needed?
     unsafe { self.device_context.CopyResource(texture, &new_texture) };
 
     let r = cb(frame_info);
