@@ -12,7 +12,7 @@ fn main() {
 
   // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
-  capturer.capture(300).unwrap();
+  capturer.capture().unwrap();
 
   // convert BGRA32 to RGBA32
   let mut buffer = Vec::with_capacity(capturer.buffer.len());
