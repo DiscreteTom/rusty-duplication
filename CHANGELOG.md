@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `Factory` to create `DuplicateContext`.
+
 ### Changed
 
 - Rewrite `Error`.
 - Re-organize export.
-- `Manager::new` and `Manager::default` will return `Manager` instead of `Result<Manager>`, and they no longer refresh the device list.
-- Remove `Manager::timeout_ms`. Update `DuplicationContext` and `Capturer` to accept `timeout_ms` as a parameter.
+
+### Removed
+
+- `Manager`. Use `Factory` instead.
 
 ## [0.5.0] - 2023-05-08
 

@@ -4,9 +4,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Error, Clone)]
 pub enum Error {
-  #[error("no output available")]
-  NoOutput,
-
   #[error("invalid buffer length")]
   InvalidBufferLength,
 
@@ -44,8 +41,6 @@ mod tests {
 
   #[test]
   fn format_error() {
-    assert_eq!(format!("{}", Error::NoOutput), "no output available");
-
     assert_eq!(
       format!("{}", Error::InvalidBufferLength),
       "invalid buffer length"

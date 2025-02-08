@@ -1,3 +1,7 @@
+mod factory;
+
+pub use factory::*;
+
 use crate::Error;
 use crate::{utils::FrameInfoExt, Result};
 use std::ptr;
@@ -19,7 +23,7 @@ use windows::{
   },
 };
 
-/// Stateless.
+/// This is stateless and immutable.
 pub struct DuplicationContext {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
@@ -28,7 +32,14 @@ pub struct DuplicationContext {
 }
 
 impl DuplicationContext {
-  pub fn new(
+  /// See [`Factory::new`].
+  #[inline]
+  pub fn factory() -> Result<Factory> {
+    Factory::new()
+  }
+
+  #[inline]
+  pub const fn new(
     device: ID3D11Device,
     device_context: ID3D11DeviceContext,
     output: IDXGIOutput1,
@@ -290,36 +301,32 @@ impl DuplicationContext {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    manager::Manager,
-    utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt},
-  };
+  use super::*;
+  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn duplication_context() {
-    let mut manager = Manager::default();
-    manager.refresh().unwrap();
-    assert_ne!(manager.contexts.len(), 0);
+    let contexts = DuplicationContext::factory().unwrap().collect::<Vec<_>>();
 
     // make sure only one primary monitor
     let mut primary_monitor_count = 0;
-    for c in &manager.contexts {
+    for c in &contexts {
       if c.monitor_info().unwrap().is_primary() {
         primary_monitor_count += 1;
       }
     }
     assert_eq!(primary_monitor_count, 1);
 
-    let (texture, desc, texture_desc) = manager.contexts[0].create_readable_texture().unwrap();
+    let (texture, desc, texture_desc) = contexts[0].create_readable_texture().unwrap();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
 
-    let info = manager.contexts[0]
+    let info = contexts[0]
       .capture(
         buffer.as_mut_ptr(),
         buffer.len(),
@@ -345,7 +352,7 @@ mod tests {
 
     // check pointer
     let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
-    let (frame_info, pointer_shape_info) = manager.contexts[0]
+    let (frame_info, pointer_shape_info) = contexts[0]
       .capture_with_pointer_shape(
         buffer.as_mut_ptr(),
         buffer.len(),

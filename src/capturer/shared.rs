@@ -246,20 +246,18 @@ impl Drop for SharedCapturer<'_> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{capturer::model::Capturer, manager::Manager, utils::FrameInfoExt};
+  use crate::{
+    capturer::model::Capturer, duplication_context::DuplicationContext, utils::FrameInfoExt,
+  };
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn shared_capturer() {
-    let mut manager = Manager::default();
-    manager.refresh().unwrap();
-    assert_ne!(manager.contexts.len(), 0);
+    let ctx = DuplicationContext::factory().unwrap().next().unwrap();
 
-    let mut capturer = manager.contexts[0]
-      .shared_capturer("RustyDuplicationTest")
-      .unwrap();
+    let mut capturer = ctx.shared_capturer("RustyDuplicationTest").unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

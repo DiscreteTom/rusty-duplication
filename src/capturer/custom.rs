@@ -133,7 +133,7 @@ impl DuplicationContext {
 mod tests {
   use crate::{
     capturer::model::Capturer,
-    manager::Manager,
+    duplication_context::DuplicationContext,
     utils::{FrameInfoExt, OutDuplDescExt},
   };
   use serial_test::serial;
@@ -142,11 +142,7 @@ mod tests {
   #[test]
   #[serial]
   fn custom_capturer() {
-    let mut manager = Manager::default();
-    manager.refresh().unwrap();
-    assert_ne!(manager.contexts.len(), 0);
-
-    let ctx = &manager.contexts[0];
+    let ctx = DuplicationContext::factory().unwrap().next().unwrap();
     let desc = ctx.dxgi_outdupl_desc();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
