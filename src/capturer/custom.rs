@@ -7,8 +7,9 @@ use windows::Win32::Graphics::{
 
 /// Capture screen to a chunk of memory.
 pub struct CustomCapturer<'a> {
+  // TODO: use a raw pointer?
   buffer: &'a mut [u8],
-  ctx: &'a Monitor,
+  monitor: Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
@@ -17,14 +18,14 @@ pub struct CustomCapturer<'a> {
 
 impl<'a> CustomCapturer<'a> {
   pub fn with_texture(
-    ctx: &'a Monitor,
+    monitor: Monitor,
     buffer: &'a mut [u8],
     texture: ID3D11Texture2D,
     texture_desc: D3D11_TEXTURE2D_DESC,
   ) -> Self {
     Self {
       buffer,
-      ctx,
+      monitor,
       texture,
       texture_desc,
       pointer_shape_buffer: Vec::new(),
@@ -32,7 +33,7 @@ impl<'a> CustomCapturer<'a> {
     }
   }
 
-  pub fn new(ctx: &'a Monitor, buffer: &'a mut [u8]) -> Result<Self> {
+  pub fn new(ctx: Monitor, buffer: &'a mut [u8]) -> Result<Self> {
     let (texture, texture_desc) =
       ctx.create_texture(&ctx.dxgi_outdupl_desc(), &ctx.dxgi_output_desc()?)?;
     Ok(Self::with_texture(ctx, buffer, texture, texture_desc))
@@ -41,11 +42,11 @@ impl<'a> CustomCapturer<'a> {
 
 impl Capturer for CustomCapturer<'_> {
   fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
+    self.monitor.dxgi_output_desc()
   }
 
   fn dxgi_outdupl_desc(&self) -> windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC {
-    self.ctx.dxgi_outdupl_desc()
+    self.monitor.dxgi_outdupl_desc()
   }
 
   fn buffer(&self) -> &[u8] {
@@ -69,7 +70,7 @@ impl Capturer for CustomCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let frame_info = self.ctx.next_frame(timeout_ms, &self.texture)?;
+    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
 
     unsafe {
       capture(
@@ -95,7 +96,7 @@ impl Capturer for CustomCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
       timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
@@ -130,14 +131,9 @@ impl Capturer for CustomCapturer<'_> {
   }
 }
 
-impl Monitor {
-  pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer<'a>> {
-    CustomCapturer::<'a>::new(self, buffer)
-  }
-}
-
 #[cfg(test)]
 mod tests {
+  use super::*;
   use crate::{capturer::model::Capturer, FrameInfoExt, OutDuplDescExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
@@ -145,10 +141,10 @@ mod tests {
   #[test]
   #[serial]
   fn custom_capturer() {
-    let ctx = Scanner::new().unwrap().next().unwrap();
-    let desc = ctx.dxgi_outdupl_desc();
+    let monitor = Scanner::new().unwrap().next().unwrap();
+    let desc = monitor.dxgi_outdupl_desc();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
-    let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
+    let mut capturer = CustomCapturer::new(monitor, &mut buffer).unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

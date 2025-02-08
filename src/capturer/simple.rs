@@ -8,21 +8,21 @@ use windows::Win32::Graphics::{
 };
 
 /// Capture screen to a `Vec<u8>`.
-pub struct SimpleCapturer<'a> {
+pub struct SimpleCapturer {
   buffer: Vec<u8>,
-  ctx: &'a Monitor,
+  monitor: Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
   pointer_shape_buffer_size: usize,
 }
 
-impl<'a> SimpleCapturer<'a> {
-  pub fn new(ctx: &'a Monitor) -> Result<Self> {
-    let (buffer, texture, texture_desc) = Self::allocate(ctx)?;
+impl SimpleCapturer {
+  pub fn new(monitor: Monitor) -> Result<Self> {
+    let (buffer, texture, texture_desc) = Self::allocate(&monitor)?;
     Ok(Self {
       buffer,
-      ctx,
+      monitor,
       texture,
       texture_desc,
       pointer_shape_buffer: Vec::new(),
@@ -30,21 +30,22 @@ impl<'a> SimpleCapturer<'a> {
     })
   }
 
-  fn allocate(ctx: &'a Monitor) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
-    let dupl_desc = ctx.dxgi_outdupl_desc();
-    let (texture, texture_desc) = ctx.create_texture(&dupl_desc, &ctx.dxgi_output_desc()?)?;
+  fn allocate(monitor: &Monitor) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
+    let dupl_desc = monitor.dxgi_outdupl_desc();
+    let (texture, texture_desc) =
+      monitor.create_texture(&dupl_desc, &monitor.dxgi_output_desc()?)?;
     let buffer = vec![0u8; dupl_desc.calc_buffer_size()];
     Ok((buffer, texture, texture_desc))
   }
 }
 
-impl Capturer for SimpleCapturer<'_> {
+impl Capturer for SimpleCapturer {
   fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
+    self.monitor.dxgi_output_desc()
   }
 
   fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
-    self.ctx.dxgi_outdupl_desc()
+    self.monitor.dxgi_outdupl_desc()
   }
 
   fn buffer(&self) -> &[u8] {
@@ -68,7 +69,7 @@ impl Capturer for SimpleCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let frame_info = self.ctx.next_frame(timeout_ms, &self.texture)?;
+    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
 
     unsafe {
       capture(
@@ -94,7 +95,7 @@ impl Capturer for SimpleCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
       timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
@@ -129,14 +130,9 @@ impl Capturer for SimpleCapturer<'_> {
   }
 }
 
-impl Monitor {
-  pub fn simple_capturer(&self) -> Result<SimpleCapturer> {
-    SimpleCapturer::new(self)
-  }
-}
-
 #[cfg(test)]
 mod tests {
+  use super::*;
   use crate::{capturer::model::Capturer, FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
@@ -144,8 +140,8 @@ mod tests {
   #[test]
   #[serial]
   fn simple_capturer() {
-    let ctx = Scanner::new().unwrap().next().unwrap();
-    let mut capturer = ctx.simple_capturer().unwrap();
+    let monitor = Scanner::new().unwrap().next().unwrap();
+    let mut capturer = SimpleCapturer::new(monitor).unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

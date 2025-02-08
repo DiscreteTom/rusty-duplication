@@ -18,48 +18,48 @@ use windows::{
 };
 
 /// Capture screen to a chunk of shared memory.
-pub struct SharedCapturer<'a> {
+pub struct SharedCapturer {
   buffer: *mut u8,
   buffer_size: usize,
   file: HANDLE,
-  ctx: &'a Monitor,
+  monitor: Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
   pointer_shape_buffer_size: usize,
 }
 
-impl<'a> SharedCapturer<'a> {
-  pub fn new(ctx: &'a Monitor, name: &str) -> Result<Self> {
-    let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(ctx, name)?;
+impl SharedCapturer {
+  pub fn new(monitor: Monitor, name: &str) -> Result<Self> {
+    let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(&monitor, name)?;
     Ok(Self {
       buffer,
       buffer_size,
       file,
       texture,
       texture_desc,
-      ctx,
+      monitor,
       pointer_shape_buffer: Vec::new(),
       pointer_shape_buffer_size: 0,
     })
   }
 
-  pub fn open(ctx: &'a Monitor, name: &str) -> Result<Self> {
-    let (buffer, buffer_size, file, texture, texture_desc) = Self::open_file(ctx, name)?;
+  pub fn open(monitor: Monitor, name: &str) -> Result<Self> {
+    let (buffer, buffer_size, file, texture, texture_desc) = Self::open_file(&monitor, name)?;
     Ok(Self {
       buffer,
       buffer_size,
       file,
       texture,
       texture_desc,
-      ctx,
+      monitor,
       pointer_shape_buffer: Vec::new(),
       pointer_shape_buffer_size: 0,
     })
   }
 
   fn allocate(
-    ctx: &'a Monitor,
+    monitor: &Monitor,
     name: &str,
   ) -> Result<(
     *mut u8,
@@ -68,8 +68,9 @@ impl<'a> SharedCapturer<'a> {
     ID3D11Texture2D,
     D3D11_TEXTURE2D_DESC,
   )> {
-    let dupl_desc = ctx.dxgi_outdupl_desc();
-    let (texture, texture_desc) = ctx.create_texture(&dupl_desc, &ctx.dxgi_output_desc()?)?;
+    let dupl_desc = monitor.dxgi_outdupl_desc();
+    let (texture, texture_desc) =
+      monitor.create_texture(&dupl_desc, &monitor.dxgi_output_desc()?)?;
     let buffer_size = dupl_desc.calc_buffer_size();
     let name = CString::new(name).unwrap(); // make the name null terminated
 
@@ -90,7 +91,7 @@ impl<'a> SharedCapturer<'a> {
   }
 
   fn open_file(
-    ctx: &'a Monitor,
+    monitor: &Monitor,
     name: &str,
   ) -> Result<(
     *mut u8,
@@ -99,8 +100,9 @@ impl<'a> SharedCapturer<'a> {
     ID3D11Texture2D,
     D3D11_TEXTURE2D_DESC,
   )> {
-    let dupl_desc = ctx.dxgi_outdupl_desc();
-    let (texture, texture_desc) = ctx.create_texture(&dupl_desc, &ctx.dxgi_output_desc()?)?;
+    let dupl_desc = monitor.dxgi_outdupl_desc();
+    let (texture, texture_desc) =
+      monitor.create_texture(&dupl_desc, &monitor.dxgi_output_desc()?)?;
     let buffer_size = dupl_desc.calc_buffer_size();
     let name = CString::new(name).unwrap(); // make the name null terminated
 
@@ -145,13 +147,13 @@ impl<'a> SharedCapturer<'a> {
   }
 }
 
-impl Capturer for SharedCapturer<'_> {
+impl Capturer for SharedCapturer {
   fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    self.ctx.dxgi_output_desc()
+    self.monitor.dxgi_output_desc()
   }
 
   fn dxgi_outdupl_desc(&self) -> windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC {
-    self.ctx.dxgi_outdupl_desc()
+    self.monitor.dxgi_outdupl_desc()
   }
 
   fn buffer(&self) -> &[u8] {
@@ -175,7 +177,7 @@ impl Capturer for SharedCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let frame_info = self.ctx.next_frame(timeout_ms, &self.texture)?;
+    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
 
     unsafe {
       capture(
@@ -201,7 +203,7 @@ impl Capturer for SharedCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
       timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
@@ -236,17 +238,7 @@ impl Capturer for SharedCapturer<'_> {
   }
 }
 
-impl Monitor {
-  pub fn shared_capturer(&self, name: &str) -> Result<SharedCapturer> {
-    SharedCapturer::new(self, name)
-  }
-
-  pub fn shared_capturer_open(&self, name: &str) -> Result<SharedCapturer> {
-    SharedCapturer::open(self, name)
-  }
-}
-
-impl Drop for SharedCapturer<'_> {
+impl Drop for SharedCapturer {
   fn drop(&mut self) {
     self.free()
   }
@@ -254,6 +246,7 @@ impl Drop for SharedCapturer<'_> {
 
 #[cfg(test)]
 mod tests {
+  use super::*;
   use crate::{capturer::model::Capturer, FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
@@ -261,9 +254,8 @@ mod tests {
   #[test]
   #[serial]
   fn shared_capturer() {
-    let ctx = Scanner::new().unwrap().next().unwrap();
-
-    let mut capturer = ctx.shared_capturer("RustyDuplicationTest").unwrap();
+    let monitor = Scanner::new().unwrap().next().unwrap();
+    let mut capturer = SharedCapturer::new(monitor, "RustyDuplicationTest").unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
