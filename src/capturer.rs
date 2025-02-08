@@ -114,7 +114,7 @@ impl<Buffer> Capturer<Buffer> {
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the [`Self::buffer`].
   ///
-  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
+  /// If the pointer shape is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
   /// The pointer shape is stored in the [`Self::pointer_shape_buffer`].
   /// # Safety
   /// You have to ensure [`Self::buffer`] is large enough to hold the frame.

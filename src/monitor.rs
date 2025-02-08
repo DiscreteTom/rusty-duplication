@@ -177,7 +177,7 @@ impl Monitor {
     self.process_next_frame(timeout_ms, texture, |r| r)
   }
 
-  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
+  /// If the pointer shape is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
   /// This will resize `pointer_shape_buffer` if needed and update it.
   pub(crate) fn next_frame_with_pointer_shape(
     &self,
