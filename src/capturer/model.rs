@@ -1,4 +1,4 @@
-use crate::model::Result;
+use crate::Result;
 use windows::Win32::Graphics::Dxgi::{
   DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
 };

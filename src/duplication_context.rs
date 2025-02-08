@@ -1,5 +1,5 @@
-use crate::error::Error;
-use crate::{model::Result, utils::FrameInfoExt};
+use crate::Error;
+use crate::{utils::FrameInfoExt, Result};
 use std::ptr;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
 use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO};

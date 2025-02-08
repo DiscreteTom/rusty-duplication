@@ -1,8 +1,8 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::error::Error;
-use crate::model::Result;
 use crate::utils::OutDuplDescExt;
+use crate::Error;
+use crate::Result;
 use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
 use windows::Win32::Graphics::{

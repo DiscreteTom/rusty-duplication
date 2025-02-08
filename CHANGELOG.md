@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Rewrite `Error`.
+- Re-organize export.
 
 ## [0.5.0] - 2023-05-08
 

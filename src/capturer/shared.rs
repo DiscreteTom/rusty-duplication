@@ -1,8 +1,8 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::error::Error;
-use crate::model::Result;
 use crate::utils::OutDuplDescExt;
+use crate::Error;
+use crate::Result;
 use std::ffi::CString;
 use std::slice;
 use windows::core::PCSTR;
