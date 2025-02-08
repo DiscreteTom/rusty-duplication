@@ -9,9 +9,11 @@ pub trait OutputDescExt {
 }
 
 impl OutputDescExt for DXGI_OUTPUT_DESC {
+  #[inline]
   fn width(&self) -> u32 {
     (self.DesktopCoordinates.right - self.DesktopCoordinates.left) as u32
   }
+  #[inline]
   fn height(&self) -> u32 {
     (self.DesktopCoordinates.bottom - self.DesktopCoordinates.top) as u32
   }
@@ -23,6 +25,7 @@ pub trait OutDuplDescExt {
 
 impl OutDuplDescExt for DXGI_OUTDUPL_DESC {
   /// Return needed buffer size, in bytes.
+  #[inline]
   fn calc_buffer_size(&self) -> usize {
     (self.ModeDesc.Width * self.ModeDesc.Height * 4) as usize // 4 for BGRA32
   }
@@ -36,14 +39,17 @@ pub trait FrameInfoExt {
 }
 
 impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
+  #[inline]
   fn desktop_updated(&self) -> bool {
     self.LastPresentTime != 0
   }
 
+  #[inline]
   fn mouse_updated(&self) -> bool {
     self.LastMouseUpdateTime != 0
   }
 
+  #[inline]
   fn pointer_shape_updated(&self) -> bool {
     self.PointerShapeBufferSize > 0
   }
@@ -54,6 +60,7 @@ pub trait MonitorInfoExt {
 }
 
 impl MonitorInfoExt for MONITORINFO {
+  #[inline]
   fn is_primary(&self) -> bool {
     self.dwFlags == 0x01 // MONITORINFOF_PRIMARY
   }
