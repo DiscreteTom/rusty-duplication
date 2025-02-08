@@ -25,7 +25,7 @@ impl TryFrom<Monitor> for VecCapturer {
   type Error = Error;
 
   fn try_from(monitor: Monitor) -> Result<Self> {
-    Capturer::new(monitor, |size| vec![0u8; size])
+    Capturer::new(monitor, |size| Ok(vec![0u8; size]))
   }
 }
 

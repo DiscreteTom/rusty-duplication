@@ -38,13 +38,16 @@ impl<Buffer> Capturer<Buffer> {
   /// Create a new capturer with the provided monitor and buffer factory.
   ///
   /// The parameter of `buffer_factory` is the size of the buffer, in bytes.
-  pub fn new(monitor: Monitor, buffer_factory: impl FnOnce(usize) -> Buffer) -> Result<Self> {
+  pub fn new(
+    monitor: Monitor,
+    buffer_factory: impl FnOnce(usize) -> Result<Buffer>,
+  ) -> Result<Self> {
     let dupl_desc = monitor.dxgi_outdupl_desc();
     let (texture, texture_desc) =
       monitor.create_texture(&dupl_desc, &monitor.dxgi_output_desc()?)?;
 
     Ok(Self {
-      buffer: buffer_factory(dupl_desc.calc_buffer_size()),
+      buffer: buffer_factory(dupl_desc.calc_buffer_size())?,
       monitor,
       texture,
       texture_desc,
