@@ -113,7 +113,7 @@ impl<'a> SharedCapturer<'a> {
         false,
         PCSTR(name.as_ptr() as *const _),
       )
-      .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
+      .map_err(Error::from_win_err(stringify!(OpenFileMappingA)))?;
 
       let buffer = Self::map_view_of_file(file, buffer_size)?;
       Ok((buffer, buffer_size, file, texture, texture_desc))

@@ -88,8 +88,9 @@ impl Manager {
       // create duplication output for each output
       for output in outputs {
         let output = output.cast::<IDXGIOutput1>().unwrap();
-        let output_duplication = unsafe { output.DuplicateOutput(&device) }
-          .map_err(Error::from_win_err(stringify!(DuplicateOutput)))?;
+        let output_duplication = unsafe { output.DuplicateOutput(&device) }.map_err(
+          Error::from_win_err(stringify!(IDXGIOutput1.DuplicateOutput)),
+        )?;
         self.contexts.push(DuplicationContext::new(
           device.clone(),
           device_context.clone(),

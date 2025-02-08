@@ -107,7 +107,9 @@ impl DuplicationContext {
         .device
         .CreateTexture2D(&texture_desc, None, Some(&mut readable_texture))
     }
-    .map_err(Error::from_win_err(stringify!(CreateTexture2D)))?;
+    .map_err(Error::from_win_err(stringify!(
+      ID3D11Device.CreateTexture2D
+    )))?;
     let readable_texture = readable_texture.unwrap();
     // Lower priorities causes stuff to be needlessly copied from gpu to ram,
     // causing huge ram usage on some systems.
@@ -129,7 +131,9 @@ impl DuplicationContext {
         .output_duplication
         .AcquireNextFrame(self.timeout_ms, &mut frame_info, &mut resource)
     }
-    .map_err(Error::from_win_err(stringify!(AcquireNextFrame)))?;
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.AcquireNextFrame
+    )))?;
     let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy GPU texture to readable texture
@@ -139,8 +143,9 @@ impl DuplicationContext {
   }
 
   fn release_frame(&self) -> Result<()> {
-    unsafe { self.output_duplication.ReleaseFrame() }
-      .map_err(Error::from_win_err(stringify!(ReleaseFrame)))
+    unsafe { self.output_duplication.ReleaseFrame() }.map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.ReleaseFrame
+    )))
   }
 
   pub fn next_frame(
@@ -188,7 +193,9 @@ impl DuplicationContext {
           &mut size,
           &mut pointer_shape_info,
         )
-        .map_err(Error::from_win_err(stringify!(GetFramePointerShape)))
+        .map_err(Error::from_win_err(stringify!(
+          IDXGIOutputDuplication.GetFramePointerShape
+        )))
     } {
       Ok(_) => {
         self.release_frame()?;
@@ -215,7 +222,7 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(Error::from_win_err(stringify!(Map)))?;
+        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
       if mapped_surface.Pitch as usize == line_bytes {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
@@ -230,7 +237,7 @@ impl DuplicationContext {
       }
       frame
         .Unmap()
-        .map_err(Error::from_win_err(stringify!(Unmap)))?;
+        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Unmap)))?;
     }
 
     Ok(frame_info)
@@ -257,7 +264,7 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(Error::from_win_err(stringify!(Map)))?;
+        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
       if mapped_surface.Pitch as usize == line_bytes {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
@@ -272,7 +279,7 @@ impl DuplicationContext {
       }
       frame
         .Unmap()
-        .map_err(Error::from_win_err(stringify!(Unmap)))?;
+        .map_err(Error::from_win_err(stringify!(IDXGISurface1.Unmap)))?;
     }
 
     Ok((frame_info, pointer_shape_info))
