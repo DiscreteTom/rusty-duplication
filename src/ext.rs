@@ -31,7 +31,6 @@ impl OutDuplDescExt for DXGI_OUTDUPL_DESC {
 
 pub trait FrameInfoExt {
   fn desktop_updated(&self) -> bool;
-  /// Return `(position_updated, shape_updated)`.
   fn mouse_updated(&self) -> MouseUpdateStatus;
 }
 
