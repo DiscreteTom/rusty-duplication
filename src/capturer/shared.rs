@@ -137,9 +137,12 @@ mod tests {
 
     // check mouse
     let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape(300).unwrap();
-    assert!(frame_info.mouse_updated());
-    assert!(pointer_shape_info.is_some());
-    // make sure pointer shape buffer is not all zero
-    assert!(!capturer.pointer_shape_buffer.iter().all(|&n| n == 0));
+    if frame_info.mouse_updated() {
+      assert!(pointer_shape_info.is_some());
+      // make sure pointer shape buffer is not all zero
+      assert!(!capturer.pointer_shape_buffer.iter().all(|&n| n == 0));
+    } else {
+      panic!("Move your mouse during the test to check mouse capture");
+    }
   }
 }
