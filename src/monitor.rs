@@ -45,6 +45,14 @@ impl Monitor {
     }
   }
 
+  /// This is usually used to check if the monitor is primary.
+  /// # Examples
+  /// ```
+  /// use rusty_duplication::{Scanner, MonitorInfoExt};
+  ///
+  /// let monitor = Scanner::new().unwrap().next().unwrap();
+  /// monitor.monitor_info().unwrap().is_primary();
+  /// ```
   pub fn monitor_info(&self) -> Result<MONITORINFO> {
     let h_monitor = self.dxgi_output_desc()?.Monitor;
     let mut info = MONITORINFO {
