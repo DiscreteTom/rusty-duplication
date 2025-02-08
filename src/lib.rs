@@ -4,7 +4,6 @@ mod monitor;
 mod scanner;
 
 pub mod capturer;
-pub mod model;
 
 pub use error::*;
 pub use ext::*;

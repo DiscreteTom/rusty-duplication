@@ -1,4 +1,3 @@
-use crate::model::MouseUpdateStatus;
 use windows::Win32::Graphics::{
   Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
   Gdi::MONITORINFO,
@@ -27,6 +26,11 @@ impl OutDuplDescExt for DXGI_OUTDUPL_DESC {
   fn calc_buffer_size(&self) -> usize {
     (self.ModeDesc.Width * self.ModeDesc.Height * 4) as usize // 4 for BGRA32
   }
+}
+
+pub struct MouseUpdateStatus {
+  pub position_updated: bool,
+  pub shape_updated: bool,
 }
 
 pub trait FrameInfoExt {
