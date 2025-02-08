@@ -8,7 +8,7 @@ fn main() {
   let width = dupl_desc.ModeDesc.Width;
   let height = dupl_desc.ModeDesc.Height;
 
-  let mut capturer = VecCapturer::new(monitor).unwrap();
+  let mut capturer: VecCapturer = monitor.try_into().unwrap();
 
   // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
