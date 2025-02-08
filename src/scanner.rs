@@ -15,15 +15,15 @@ use windows::{
   },
 };
 
-/// Factory of [`Monitor`].
+/// Scan for [`Monitor`]s.
 /// # Examples
-/// ```no_run
-/// use rusty_duplication::Factory;
+/// ```
+/// use rusty_duplication::Scanner;
 ///
-/// // create a new factory
-/// let mut factory = Factory::new().unwrap();
-/// // get the next available context
-/// let ctx = factory.next().unwrap();
+/// // create a new scanner
+/// let mut scanner = Scanner::new().unwrap();
+/// // get the next available monitor
+/// let ctx = scanner.next().unwrap();
 /// ```
 #[derive(Debug)]
 pub struct Scanner {
@@ -36,7 +36,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-  /// Try to create a new factory.
+  /// Try to create a new scanner.
   /// Return [`Err`] if no adapter is found.
   pub fn new() -> Result<Self> {
     let factory = unsafe { CreateDXGIFactory1::<IDXGIFactory1>() }
