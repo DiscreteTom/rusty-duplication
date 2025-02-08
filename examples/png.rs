@@ -1,5 +1,5 @@
 use image::{ImageBuffer, RgbaImage};
-use rusty_duplication::{capturer::model::Capturer, Scanner};
+use rusty_duplication::{Capturer, Scanner};
 use std::{thread, time::Duration};
 
 fn main() {

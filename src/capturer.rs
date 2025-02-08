@@ -1,3 +1,8 @@
+mod custom;
+mod model;
+mod shared;
+mod simple;
+
 use crate::{Error, Result};
 use std::ptr;
 use windows::{
@@ -8,10 +13,10 @@ use windows::{
   },
 };
 
-pub mod custom;
-pub mod model;
-pub mod shared;
-pub mod simple;
+pub use custom::*;
+pub use model::*;
+pub use shared::*;
+pub use simple::*;
 
 /// Capture the next frame to the provided buffer.
 /// # Safety
