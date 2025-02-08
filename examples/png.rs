@@ -1,5 +1,5 @@
 use image::{ImageBuffer, RgbaImage};
-use rusty_duplication::{Capturer, Scanner, SimpleCapturer};
+use rusty_duplication::{Capturer, Scanner, VecCapturer};
 use std::{thread, time::Duration};
 
 fn main() {
@@ -8,7 +8,7 @@ fn main() {
   let width = dupl_desc.ModeDesc.Width;
   let height = dupl_desc.ModeDesc.Height;
 
-  let mut capturer = SimpleCapturer::new(monitor).unwrap();
+  let mut capturer = VecCapturer::new(monitor).unwrap();
 
   // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
