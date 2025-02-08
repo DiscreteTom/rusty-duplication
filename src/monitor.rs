@@ -239,22 +239,26 @@ impl Monitor {
   ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     let (frame, frame_info) = self.next_frame(timeout_ms, readable_texture)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
-    let line_bytes = texture_desc.Width as usize * 4;
+    let bytes_per_line = texture_desc.Width as usize * 4; // 4 for BGRA32
 
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
-      if mapped_surface.Pitch as usize == line_bytes {
+      if mapped_surface.Pitch as usize == bytes_per_line {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
         // https://github.com/DiscreteTom/rusty-duplication/issues/7
-        for i in 0..texture_desc.Height {
-          let src = mapped_surface
-            .pBits
-            .offset((i * mapped_surface.Pitch as u32) as isize);
-          let dest = dest.offset((i * line_bytes as u32) as isize);
+        // TODO: add a debug info here
+        let mut src_offset = 0;
+        let mut dest_offset = 0;
+        for _ in 0..texture_desc.Height {
+          let src = mapped_surface.pBits.offset(src_offset);
+          let dest = dest.offset(dest_offset);
           ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
+
+          src_offset += mapped_surface.Pitch as isize;
+          dest_offset += bytes_per_line as isize;
         }
       }
       frame
@@ -285,22 +289,26 @@ impl Monitor {
     let (frame, frame_info, pointer_shape_info) =
       self.next_frame_with_pointer_shape(timeout_ms, readable_texture, pointer_shape_buffer)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
-    let line_bytes = texture_desc.Width as usize * 4;
+    let bytes_per_line = texture_desc.Width as usize * 4; // 4 for BGRA32
 
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
         .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
-      if mapped_surface.Pitch as usize == line_bytes {
+      if mapped_surface.Pitch as usize == bytes_per_line {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
         // https://github.com/DiscreteTom/rusty-duplication/issues/7
-        for i in 0..texture_desc.Height {
-          let src = mapped_surface
-            .pBits
-            .offset((i * mapped_surface.Pitch as u32) as isize);
-          let dest = dest.offset((i * line_bytes as u32) as isize);
+        // TODO: add a debug info here
+        let mut src_offset = 0;
+        let mut dest_offset = 0;
+        for _ in 0..texture_desc.Height {
+          let src = mapped_surface.pBits.offset(src_offset);
+          let dest = dest.offset(dest_offset);
           ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
+
+          src_offset += mapped_surface.Pitch as isize;
+          dest_offset += bytes_per_line as isize;
         }
       }
       frame
