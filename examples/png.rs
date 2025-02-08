@@ -1,10 +1,14 @@
 use image::{ImageBuffer, RgbaImage};
-use rusty_duplication::{Capturer, Scanner};
+use rusty_duplication::{Capturer, Scanner, SimpleCapturer};
 use std::{thread, time::Duration};
 
 fn main() {
   let monitor = Scanner::new().unwrap().next().unwrap();
-  let mut capturer = monitor.simple_capturer().unwrap();
+  let dupl_desc = monitor.dxgi_outdupl_desc();
+  let width = dupl_desc.ModeDesc.Width;
+  let height = dupl_desc.ModeDesc.Height;
+
+  let mut capturer = SimpleCapturer::new(monitor).unwrap();
 
   // sleep for a while before capture to wait system to update the screen
   thread::sleep(Duration::from_millis(100));
@@ -18,10 +22,6 @@ fn main() {
     buffer.push(capturer.buffer()[i]);
     buffer.push(capturer.buffer()[i + 3]);
   }
-
-  let dimension = monitor.dxgi_outdupl_desc();
-  let width = dimension.ModeDesc.Width;
-  let height = dimension.ModeDesc.Height;
 
   let img: RgbaImage = ImageBuffer::from_raw(width, height, buffer).unwrap();
 
