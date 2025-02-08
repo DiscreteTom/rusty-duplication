@@ -67,7 +67,7 @@ impl SharedMemoryCapturer {
         .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
 
         Ok(SharedMemory {
-          ptr: Self::map_view_of_file(file, len)?,
+          ptr: map_view_of_file(file, len)?,
           len,
           file,
         })
@@ -89,30 +89,30 @@ impl SharedMemoryCapturer {
         .map_err(Error::from_win_err(stringify!(OpenFileMappingA)))?;
 
         Ok(SharedMemory {
-          ptr: Self::map_view_of_file(file, len)?,
+          ptr: map_view_of_file(file, len)?,
           len,
           file,
         })
       }
     })
   }
+}
 
-  unsafe fn map_view_of_file(file: HANDLE, buffer_size: usize) -> Result<*mut u8> {
-    let buffer_ptr = MapViewOfFile(
-      file,                // handle to map object
-      FILE_MAP_ALL_ACCESS, // read/write permission
-      0,
-      0,
-      buffer_size,
-    );
+unsafe fn map_view_of_file(file: HANDLE, buffer_size: usize) -> Result<*mut u8> {
+  let buffer_ptr = MapViewOfFile(
+    file,                // handle to map object
+    FILE_MAP_ALL_ACCESS, // read/write permission
+    0,
+    0,
+    buffer_size,
+  );
 
-    if buffer_ptr.Value.is_null() {
-      CloseHandle(file).ok();
-      return Err(Error::last_win_err(stringify!(MapViewOfFile)));
-    }
-
-    Ok(buffer_ptr.Value as *mut u8)
+  if buffer_ptr.Value.is_null() {
+    CloseHandle(file).ok();
+    return Err(Error::last_win_err(stringify!(MapViewOfFile)));
   }
+
+  Ok(buffer_ptr.Value as *mut u8)
 }
 
 #[cfg(test)]
