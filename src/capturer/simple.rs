@@ -31,7 +31,7 @@ impl<'a> SimpleCapturer<'a> {
   }
 
   fn allocate(ctx: &'a Monitor) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
-    let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
+    let (texture, desc, texture_desc) = ctx.create_texture()?;
     let buffer = vec![0u8; desc.calc_buffer_size()];
     Ok((buffer, texture, texture_desc))
   }

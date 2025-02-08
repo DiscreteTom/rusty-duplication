@@ -86,7 +86,7 @@ impl Monitor {
     unsafe { self.output_duplication.GetDesc() }
   }
 
-  pub(crate) fn create_readable_texture(
+  pub(crate) fn create_texture(
     &self,
   ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
     let dupl_desc = self.dxgi_outdupl_desc();
@@ -115,23 +115,23 @@ impl Monitor {
       },
     };
 
-    // create a readable texture in GPU memory
-    let mut readable_texture: Option<ID3D11Texture2D> = None;
+    // create a texture in GPU memory
+    let mut texture: Option<ID3D11Texture2D> = None;
     unsafe {
       self
         .device
-        .CreateTexture2D(&texture_desc, None, Some(&mut readable_texture))
+        .CreateTexture2D(&texture_desc, None, Some(&mut texture))
     }
     .map_err(Error::from_win_err(stringify!(
       ID3D11Device.CreateTexture2D
     )))?;
-    let readable_texture = readable_texture.unwrap();
+    let texture = texture.unwrap();
     // Lower priorities causes stuff to be needlessly copied from gpu to ram,
     // causing huge ram usage on some systems.
     // https://github.com/bryal/dxgcap-rs/blob/208d93368bc64aed783791242410459c878a10fb/src/lib.rs#L225
-    unsafe { readable_texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
+    unsafe { texture.SetEvictionPriority(DXGI_RESOURCE_PRIORITY_MAXIMUM.0) };
 
-    Ok((readable_texture, dupl_desc, texture_desc))
+    Ok((texture, dupl_desc, texture_desc))
   }
 
   /// Try to process the next frame with the provided `cb`.
