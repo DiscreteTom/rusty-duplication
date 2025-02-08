@@ -1,5 +1,5 @@
 use super::model::Capturer;
-use crate::{utils::OutDuplDescExt, Error, Monitor, Result};
+use crate::{Error, Monitor, OutDuplDescExt, Result};
 use windows::Win32::Graphics::{
   Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
   Dxgi::{
@@ -125,7 +125,7 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-  use crate::{capturer::model::Capturer, utils::FrameInfoExt, Scanner};
+  use crate::{capturer::model::Capturer, FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 

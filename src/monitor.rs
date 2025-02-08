@@ -1,4 +1,4 @@
-use crate::{utils::FrameInfoExt, Error, Result};
+use crate::{Error, FrameInfoExt, Result};
 use std::ptr;
 use windows::{
   core::Interface,
@@ -293,10 +293,7 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt},
-    Scanner,
-  };
+  use crate::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
