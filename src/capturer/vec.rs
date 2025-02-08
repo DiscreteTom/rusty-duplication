@@ -57,12 +57,14 @@ mod tests {
 
     // check mouse
     let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape().unwrap();
-    if frame_info.mouse_updated() {
+    if frame_info.pointer_shape_updated() {
       assert!(pointer_shape_info.is_some());
       // make sure pointer shape buffer is not all zero
       assert!(!capturer.pointer_shape_buffer.iter().all(|&n| n == 0));
     } else {
-      panic!("Move your mouse during the test to check mouse capture");
+      panic!(
+        "Move your mouse to change the shape of the cursor during the test to check mouse capture"
+      );
     }
   }
 }
