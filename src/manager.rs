@@ -1,7 +1,8 @@
 use crate::duplication_context::DuplicationContext;
 use crate::error::Error;
 use crate::model::Result;
-use windows::core::ComInterface;
+use windows::core::Interface;
+use windows::Win32::Foundation::HMODULE;
 use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL_9_1};
 use windows::Win32::Graphics::Direct3D11::{
   D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, D3D11_CREATE_DEVICE_FLAG, D3D11_SDK_VERSION,
@@ -62,7 +63,7 @@ impl Manager {
 
     // prepare device and output
     for (adapter, outputs) in adapter_outputs {
-      let mut device: Option<ID3D11Device> = None.clone();
+      let mut device: Option<ID3D11Device> = None;
       let mut device_context: Option<ID3D11DeviceContext> = None.clone();
       let mut feature_level = D3D_FEATURE_LEVEL_9_1;
 
@@ -71,7 +72,7 @@ impl Manager {
         D3D11CreateDevice(
           &adapter,
           D3D_DRIVER_TYPE_UNKNOWN,
-          None,
+          HMODULE(std::ptr::null_mut()),
           D3D11_CREATE_DEVICE_FLAG(0),
           None,
           D3D11_SDK_VERSION,
@@ -81,7 +82,10 @@ impl Manager {
         )
       }
       .map_err(|e| Error::windows("D3D11CreateDevice", e))?;
-      let device = device.unwrap();
+      let device = match device {
+        Some(dev) => dev,
+        None => continue
+      };
       let device_context = device_context.unwrap();
 
       // create duplication output for each output

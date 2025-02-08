@@ -4,7 +4,7 @@ use std::ptr;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
 use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO};
 use windows::{
-  core::ComInterface,
+  core::Interface,
   Win32::Graphics::{
     Direct3D11::{
       ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D, D3D11_BIND_FLAG, D3D11_CPU_ACCESS_READ,
@@ -58,17 +58,14 @@ impl DuplicationContext {
 
   /// This is usually used to get the screen's position and size.
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    let mut desc = DXGI_OUTPUT_DESC::default();
-    unsafe { self.output.GetDesc(&mut desc) }
+    let ret = unsafe { self.output.GetDesc() }
       .map_err(|e| Error::windows("DXGI_OUTPUT_DESC.GetDesc", e))?;
-    Ok(desc)
+    Ok(ret)
   }
 
   /// This is usually used to get the screen's pixel width/height and buffer size.
   pub fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
-    let mut desc = DXGI_OUTDUPL_DESC::default();
-    unsafe { self.output_duplication.GetDesc(&mut desc) };
-    desc
+    unsafe { self.output_duplication.GetDesc() }
   }
 
   pub fn create_readable_texture(
@@ -79,9 +76,9 @@ impl DuplicationContext {
 
     // create a readable texture description
     let texture_desc = D3D11_TEXTURE2D_DESC {
-      BindFlags: D3D11_BIND_FLAG::default(),
-      CPUAccessFlags: D3D11_CPU_ACCESS_READ,
-      MiscFlags: D3D11_RESOURCE_MISC_FLAG::default(),
+      BindFlags: D3D11_BIND_FLAG::default().0 as u32,
+      CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
+      MiscFlags: D3D11_RESOURCE_MISC_FLAG::default().0 as u32,
       Usage: D3D11_USAGE_STAGING, // A resource that supports data transfer (copy) from the GPU to the CPU.
       Width: if output_desc.Rotation.0 == 2 || output_desc.Rotation.0 == 4 {
         dupl_desc.ModeDesc.Height
