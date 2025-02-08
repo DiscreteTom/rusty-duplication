@@ -219,6 +219,7 @@ impl Monitor {
     .map_err(Error::from_win_err(stringify!(
       IDXGIOutputDuplication.GetFramePointerShape
     )));
+    pointer_shape_buffer.truncate(size as usize);
     self.release_frame()?;
 
     match r {
