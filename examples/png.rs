@@ -1,5 +1,5 @@
 use image::{ImageBuffer, RgbaImage};
-use rusty_duplication::{Capturer, Scanner, VecCapturer};
+use rusty_duplication::{Scanner, VecCapturer};
 use std::{thread, time::Duration};
 
 fn main() {
@@ -15,12 +15,12 @@ fn main() {
   capturer.capture(300).unwrap();
 
   // convert BGRA32 to RGBA32
-  let mut buffer = Vec::with_capacity(capturer.buffer().len());
-  for i in (0..capturer.buffer().len()).step_by(4) {
-    buffer.push(capturer.buffer()[i + 2]);
-    buffer.push(capturer.buffer()[i + 1]);
-    buffer.push(capturer.buffer()[i]);
-    buffer.push(capturer.buffer()[i + 3]);
+  let mut buffer = Vec::with_capacity(capturer.buffer.len());
+  for i in (0..capturer.buffer.len()).step_by(4) {
+    buffer.push(capturer.buffer[i + 2]);
+    buffer.push(capturer.buffer[i + 1]);
+    buffer.push(capturer.buffer[i]);
+    buffer.push(capturer.buffer[i + 3]);
   }
 
   let img: RgbaImage = ImageBuffer::from_raw(width, height, buffer).unwrap();
