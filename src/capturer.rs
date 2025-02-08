@@ -27,6 +27,8 @@ pub trait CapturerBuffer {
 #[derive(Debug, Clone)]
 pub struct Capturer<Buffer> {
   pub pointer_shape_buffer: Vec<u8>,
+  /// The buffer to store the captured frame.
+  /// The data is stored in BGRA32 format.
   pub buffer: Buffer,
   /// Timeout in milliseconds for the next frame.
   /// By default it is 300ms.
