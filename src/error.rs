@@ -1,32 +1,28 @@
-#[derive(Debug)]
-pub struct Error {
-  pub message: String,
-  pub windows: Option<windows::core::Error>,
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+  #[error("invalid buffer length")]
+  InvalidBufferLength,
+  #[error("no output available")]
+  NoOutput,
+  /// A Windows error.
+  #[error("{api}: {err}")]
+  Windows {
+    api: &'static str,
+    err: windows::core::Error,
+  },
 }
 
 impl Error {
-  pub fn new(message: impl Into<String>) -> Error {
-    Error {
-      message: message.into(),
-      windows: None,
-    }
+  pub(crate) fn windows(api: &'static str, err: windows::core::Error) -> Error {
+    Error::Windows { api, err }
   }
 
-  pub fn windows(message: impl Into<String>, err: windows::core::Error) -> Error {
-    Error {
-      message: message.into(),
-      windows: Some(err),
+  pub(crate) fn from_win32(api: &'static str) -> Error {
+    Error::Windows {
+      api,
+      err: windows::core::Error::from_win32(),
     }
   }
 }
-
-impl std::fmt::Display for Error {
-  fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self.windows {
-      Some(ref err) => std::write!(fmt, "{} ({})", self.message, err),
-      None => std::write!(fmt, "{}", self.message),
-    }
-  }
-}
-
-impl std::error::Error for Error {}

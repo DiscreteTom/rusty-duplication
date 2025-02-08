@@ -141,7 +141,10 @@ impl<'a> SharedCapturer<'a> {
 
     if buffer_ptr.Value.is_null() {
       CloseHandle(file).ok();
-      return Err(Error::new("MapViewOfFile"));
+      return Err(Error::windows(
+        stringify!(MapViewOfFile),
+        windows::core::Error::from_win32(),
+      ));
     }
 
     Ok(buffer_ptr.Value as *mut u8)
@@ -167,7 +170,7 @@ impl Capturer for SharedCapturer<'_> {
 
   fn check_buffer(&self) -> Result<()> {
     if self.buffer_size < self.dxgi_outdupl_desc().calc_buffer_size() {
-      Err(Error::new("Invalid buffer length"))
+      Err(Error::InvalidBufferLength)
     } else {
       Ok(())
     }

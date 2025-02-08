@@ -54,7 +54,7 @@ impl DuplicationContext {
     if unsafe { GetMonitorInfoW(h_monitor, &mut info).as_bool() } {
       Ok(info)
     } else {
-      Err(Error::new("GetMonitorInfoW"))
+      Err(Error::from_win32(stringify!(GetMonitorInfoW)))
     }
   }
 

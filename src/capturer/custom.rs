@@ -62,7 +62,7 @@ impl Capturer for CustomCapturer<'_> {
 
   fn check_buffer(&self) -> Result<()> {
     if self.buffer.len() < self.dxgi_outdupl_desc().calc_buffer_size() {
-      Err(Error::new("Invalid buffer length"))
+      Err(Error::InvalidBufferLength)
     } else {
       Ok(())
     }

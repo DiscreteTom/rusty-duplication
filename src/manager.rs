@@ -58,7 +58,7 @@ impl Manager {
       }
     }
     if adapter_outputs.is_empty() {
-      return Err(Error::new("No output"));
+      return Err(Error::NoOutput);
     }
 
     // prepare device and output
