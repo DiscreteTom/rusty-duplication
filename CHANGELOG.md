@@ -12,7 +12,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FrameInfoExt::pointer_shape_updated`.
 - `Capturer::monitor`.
 - `Capturer::capture_unchecked` and `Capturer::capture_with_pointer_shape_unchecked`.
-- `Capturer::texture` and `Capturer::texture_desc`.
 - `Capturer::new`, `Capturer::try_into` for `VecCapturer`, `Capturer::create` and `Capturer::open` for `SharedCapturer`.
 - `SharedMemory`.
 - `CapturerBuffer`.

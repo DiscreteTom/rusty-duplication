@@ -57,16 +57,6 @@ impl<Buffer> Capturer<Buffer> {
     &self.monitor
   }
 
-  #[inline]
-  pub const fn texture(&self) -> &ID3D11Texture2D {
-    &self.texture
-  }
-
-  #[inline]
-  pub const fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
-    &self.texture_desc
-  }
-
   /// Check buffer size.
   pub fn check_buffer(&self) -> Result<()>
   where
