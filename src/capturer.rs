@@ -52,15 +52,18 @@ impl<Buffer> Capturer<Buffer> {
     })
   }
 
-  pub fn monitor(&self) -> &Monitor {
+  #[inline]
+  pub const fn monitor(&self) -> &Monitor {
     &self.monitor
   }
 
-  pub fn texture(&self) -> &ID3D11Texture2D {
+  #[inline]
+  pub const fn texture(&self) -> &ID3D11Texture2D {
     &self.texture
   }
 
-  pub fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
+  #[inline]
+  pub const fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
     &self.texture_desc
   }
 
@@ -99,6 +102,7 @@ impl<Buffer> Capturer<Buffer> {
   /// The pixel data is stored in the [`Capturer::buffer`].
   ///
   /// This will call [`Capturer::check_buffer`] to check the buffer size.
+  #[inline]
   pub fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>
   where
     Buffer: CapturerBuffer,
@@ -147,6 +151,7 @@ impl<Buffer> Capturer<Buffer> {
   /// The pointer shape is stored in the [`Capturer::pointer_shape_buffer`].
   ///
   /// This will call [`Capturer::check_buffer`] to check the buffer size.
+  #[inline]
   pub fn capture_with_pointer_shape(
     &mut self,
     timeout_ms: u32,
