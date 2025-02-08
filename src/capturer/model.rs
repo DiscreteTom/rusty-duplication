@@ -27,11 +27,11 @@ pub trait Capturer {
 
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the `buffer`.
-  fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
 
   /// Check buffer size before capture.
   /// The pixel data is stored in the `buffer`.
-  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+  fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
 
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the `buffer`.
@@ -39,6 +39,7 @@ pub trait Capturer {
   /// The pointer shape is stored in the `pointer_shape_buffer`.
   fn capture_with_pointer_shape(
     &mut self,
+    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
@@ -50,6 +51,7 @@ pub trait Capturer {
   /// The pointer shape is stored in the `pointer_shape_buffer`.
   fn safe_capture_with_pointer_shape(
     &mut self,
+    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,

@@ -23,7 +23,6 @@ use windows::{
 pub struct DuplicationContext {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
-  timeout_ms: u32,
   output: IDXGIOutput1,
   output_duplication: IDXGIOutputDuplication,
 }
@@ -34,12 +33,10 @@ impl DuplicationContext {
     device_context: ID3D11DeviceContext,
     output: IDXGIOutput1,
     output_duplication: IDXGIOutputDuplication,
-    timeout_ms: u32,
   ) -> Self {
     Self {
       device,
       device_context,
-      timeout_ms,
       output,
       output_duplication,
     }
@@ -121,6 +118,7 @@ impl DuplicationContext {
 
   fn acquire_next_frame(
     &self,
+    timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
   ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
     // acquire GPU texture
@@ -129,7 +127,7 @@ impl DuplicationContext {
     unsafe {
       self
         .output_duplication
-        .AcquireNextFrame(self.timeout_ms, &mut frame_info, &mut resource)
+        .AcquireNextFrame(timeout_ms, &mut frame_info, &mut resource)
     }
     .map_err(Error::from_win_err(stringify!(
       IDXGIOutputDuplication.AcquireNextFrame
@@ -150,9 +148,10 @@ impl DuplicationContext {
 
   pub fn next_frame(
     &self,
+    timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
   ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
-    let (surface, frame_info) = self.acquire_next_frame(readable_texture)?;
+    let (surface, frame_info) = self.acquire_next_frame(timeout_ms, readable_texture)?;
     self.release_frame()?;
     Ok((surface, frame_info))
   }
@@ -161,6 +160,7 @@ impl DuplicationContext {
   /// and this will resize `pointer_shape_buffer` if needed and update it.
   pub fn next_frame_with_pointer_shape(
     &self,
+    timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
     pointer_shape_buffer: &mut Vec<u8>,
   ) -> Result<(
@@ -168,7 +168,7 @@ impl DuplicationContext {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (surface, frame_info) = self.acquire_next_frame(readable_texture)?;
+    let (surface, frame_info) = self.acquire_next_frame(timeout_ms, readable_texture)?;
 
     if !frame_info.mouse_updated().shape_updated {
       self.release_frame()?;
@@ -212,10 +212,11 @@ impl DuplicationContext {
     &self,
     dest: *mut u8,
     len: usize,
+    timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
     texture_desc: &D3D11_TEXTURE2D_DESC,
   ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let (frame, frame_info) = self.next_frame(readable_texture)?;
+    let (frame, frame_info) = self.next_frame(timeout_ms, readable_texture)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
     let line_bytes = texture_desc.Width as usize * 4;
 
@@ -249,6 +250,7 @@ impl DuplicationContext {
     &self,
     dest: *mut u8,
     len: usize,
+    timeout_ms: u32,
     readable_texture: &ID3D11Texture2D,
     texture_desc: &D3D11_TEXTURE2D_DESC,
     pointer_shape_buffer: &mut Vec<u8>,
@@ -257,7 +259,7 @@ impl DuplicationContext {
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
     let (frame, frame_info, pointer_shape_info) =
-      self.next_frame_with_pointer_shape(readable_texture, pointer_shape_buffer)?;
+      self.next_frame_with_pointer_shape(timeout_ms, readable_texture, pointer_shape_buffer)?;
     let mut mapped_surface = DXGI_MAPPED_RECT::default();
     let line_bytes = texture_desc.Width as usize * 4;
 
@@ -318,7 +320,13 @@ mod tests {
     thread::sleep(Duration::from_millis(100));
 
     let info = manager.contexts[0]
-      .capture(buffer.as_mut_ptr(), buffer.len(), &texture, &texture_desc)
+      .capture(
+        buffer.as_mut_ptr(),
+        buffer.len(),
+        300,
+        &texture,
+        &texture_desc,
+      )
       .unwrap();
     assert!(info.desktop_updated());
 
@@ -341,6 +349,7 @@ mod tests {
       .capture_with_pointer_shape(
         buffer.as_mut_ptr(),
         buffer.len(),
+        300,
         &texture,
         &texture_desc,
         &mut pointer_shape_buffer,

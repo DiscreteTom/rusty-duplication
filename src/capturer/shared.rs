@@ -177,22 +177,24 @@ impl Capturer for SharedCapturer<'_> {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
   }
 
-  fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self.ctx.capture(
       self.buffer,
       self.buffer_size,
+      timeout_ms,
       &self.texture,
       &self.texture_desc,
     )
   }
 
-  fn safe_capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+  fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self.check_buffer()?;
-    self.capture()
+    self.capture(timeout_ms)
   }
 
   fn capture_with_pointer_shape(
     &mut self,
+    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
@@ -200,6 +202,7 @@ impl Capturer for SharedCapturer<'_> {
     let (frame_info, pointer_shape_info) = self.ctx.capture_with_pointer_shape(
       self.buffer,
       self.buffer_size,
+      timeout_ms,
       &self.texture,
       &self.texture_desc,
       &mut self.pointer_shape_buffer,
@@ -215,12 +218,13 @@ impl Capturer for SharedCapturer<'_> {
 
   fn safe_capture_with_pointer_shape(
     &mut self,
+    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
     self.check_buffer()?;
-    self.capture_with_pointer_shape()
+    self.capture_with_pointer_shape(timeout_ms)
   }
 }
 
@@ -260,7 +264,7 @@ mod tests {
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
 
-    let info = capturer.safe_capture().unwrap();
+    let info = capturer.safe_capture(300).unwrap();
     assert!(info.desktop_updated());
 
     let buffer = capturer.buffer();
@@ -278,7 +282,7 @@ mod tests {
     thread::sleep(Duration::from_millis(1000));
 
     // check pointer shape
-    let (frame_info, pointer_shape_info) = capturer.safe_capture_with_pointer_shape().unwrap();
+    let (frame_info, pointer_shape_info) = capturer.safe_capture_with_pointer_shape(300).unwrap();
     assert!(frame_info.mouse_updated().position_updated);
     assert!(pointer_shape_info.is_some());
     let pointer_shape_data = capturer.pointer_shape_buffer();

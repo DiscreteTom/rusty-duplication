@@ -11,23 +11,21 @@ use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1, IDXGIOut
 
 pub struct Manager {
   pub contexts: Vec<DuplicationContext>,
-  timeout_ms: u32,
 }
 
 impl Default for Manager {
   #[inline]
   fn default() -> Self {
-    Manager::new(300)
+    Manager::new()
   }
 }
 
 impl Manager {
   /// Create a new manager with the provided timeout.
   #[inline]
-  pub const fn new(timeout_ms: u32) -> Manager {
+  pub const fn new() -> Manager {
     Manager {
       contexts: Vec::new(),
-      timeout_ms,
     }
   }
 
@@ -96,7 +94,6 @@ impl Manager {
           device_context.clone(),
           output,
           output_duplication,
-          self.timeout_ms,
         ))
       }
     }
