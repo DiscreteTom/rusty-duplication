@@ -19,6 +19,9 @@ use windows::{
 
 /// Monitor context for screen duplication.
 /// This is stateless and immutable.
+///
+/// To create a new instance, use [`Scanner`](crate::Scanner).
+#[derive(Debug, Clone)]
 pub struct Monitor {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
