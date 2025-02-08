@@ -2,10 +2,12 @@ use super::CapturerBuffer;
 use crate::{Capturer, Error, Monitor, Result};
 
 impl CapturerBuffer for Vec<u8> {
+  #[inline]
   fn as_bytes(&self) -> &[u8] {
     self
   }
 
+  #[inline]
   fn as_bytes_mut(&mut self) -> &mut [u8] {
     self
   }
