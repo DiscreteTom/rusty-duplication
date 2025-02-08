@@ -24,6 +24,7 @@ pub trait CapturerBuffer {
 }
 
 /// This is stateful and holds a buffer of the last captured frame.
+#[derive(Debug, Clone)]
 pub struct Capturer<Buffer> {
   pub pointer_shape_buffer: Vec<u8>,
   pub buffer: Buffer,
