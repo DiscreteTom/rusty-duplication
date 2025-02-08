@@ -6,7 +6,7 @@ use windows::Win32::Graphics::{
 };
 
 /// Capture screen to a `Vec<u8>`.
-pub struct SimpleCapturer {
+pub struct VecCapturer {
   buffer: Vec<u8>,
   monitor: Monitor,
   texture: ID3D11Texture2D,
@@ -14,7 +14,7 @@ pub struct SimpleCapturer {
   pointer_shape_buffer: Vec<u8>,
 }
 
-impl SimpleCapturer {
+impl VecCapturer {
   pub fn new(monitor: Monitor) -> Result<Self> {
     let (buffer, texture, texture_desc) = Self::allocate(&monitor)?;
     Ok(Self {
@@ -35,7 +35,7 @@ impl SimpleCapturer {
   }
 }
 
-impl Capturer for SimpleCapturer {
+impl Capturer for VecCapturer {
   fn monitor(&self) -> &Monitor {
     &self.monitor
   }
@@ -106,7 +106,7 @@ mod tests {
   #[serial]
   fn simple_capturer() {
     let monitor = Scanner::new().unwrap().next().unwrap();
-    let mut capturer = SimpleCapturer::new(monitor).unwrap();
+    let mut capturer = VecCapturer::new(monitor).unwrap();
 
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));

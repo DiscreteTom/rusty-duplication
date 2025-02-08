@@ -1,6 +1,6 @@
 mod custom;
 mod shared;
-mod simple;
+mod vec;
 
 use crate::{Error, Monitor, OutDuplDescExt, Result};
 use std::ptr;
@@ -17,7 +17,7 @@ use windows::{
 
 pub use custom::*;
 pub use shared::*;
-pub use simple::*;
+pub use vec::*;
 
 /// Capturer is stateful, it holds a buffer of the last captured frame.
 pub trait Capturer {

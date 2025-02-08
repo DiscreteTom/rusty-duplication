@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FrameInfoExt::mouse_updated` will return a `bool`.
 - Capturers will consume the `Monitor`. You can clone `Monitor` to create multiple capturers.
 - `Capturer::capture` and `Capturer::capture_with_pointer_shape` is safe now.
+- Rename `SimpleCapturer` to `VecCapturer`.
 
 ### Removed
 
