@@ -24,3 +24,4 @@ windows = { version = "0.59.0", features = [
 
 [dev-dependencies]
 serial_test = "*"
+image = "0.25.5"
