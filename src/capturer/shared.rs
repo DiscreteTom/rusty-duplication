@@ -173,10 +173,15 @@ impl Capturer for SharedCapturer<'_> {
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
-    let (frame, frame_info) = self.ctx.next_frame(timeout_ms, &self.texture)?;
+    let frame_info = self.ctx.next_frame(timeout_ms, &self.texture)?;
 
     unsafe {
-      capture(&frame, self.buffer, self.buffer_size, &self.texture_desc)?;
+      capture(
+        &self.texture,
+        self.buffer,
+        self.buffer_size,
+        &self.texture_desc,
+      )?;
     }
 
     Ok(frame_info)
@@ -194,13 +199,20 @@ impl Capturer for SharedCapturer<'_> {
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
-    let (frame, frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = self.ctx.next_frame_with_pointer_shape(
       timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
     )?;
 
-    unsafe { capture(&frame, self.buffer, self.buffer_size, &self.texture_desc) }?;
+    unsafe {
+      capture(
+        &self.texture,
+        self.buffer,
+        self.buffer_size,
+        &self.texture_desc,
+      )
+    }?;
 
     if pointer_shape_info.is_some() {
       // record the pointer shape buffer size

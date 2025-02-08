@@ -8,7 +8,7 @@ use windows::{
     },
     Dxgi::{
       Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
-      IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, IDXGISurface1, DXGI_OUTDUPL_DESC,
+      IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, DXGI_OUTDUPL_DESC,
       DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
       DXGI_RESOURCE_PRIORITY_MAXIMUM,
     },
@@ -89,6 +89,7 @@ impl Monitor {
   pub(crate) fn create_texture(
     &self,
   ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
+    // TODO: make these as param
     let dupl_desc = self.dxgi_outdupl_desc();
     let output_desc = self.dxgi_output_desc()?;
 
@@ -138,8 +139,8 @@ impl Monitor {
   fn process_next_frame<R>(
     &self,
     timeout_ms: u32,
-    readable_texture: &ID3D11Texture2D,
-    cb: impl FnOnce((IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)) -> R,
+    texture: &ID3D11Texture2D,
+    cb: impl FnOnce(DXGI_OUTDUPL_FRAME_INFO) -> R,
   ) -> Result<R> {
     // acquire GPU texture
     let mut frame_info = DXGI_OUTDUPL_FRAME_INFO::default();
@@ -152,13 +153,13 @@ impl Monitor {
     .map_err(Error::from_win_err(stringify!(
       IDXGIOutputDuplication.AcquireNextFrame
     )))?;
-    let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
+    let new_texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
-    // copy GPU texture to readable texture
+    // copy texture using GPU
     // TODO: is this needed?
-    unsafe { self.device_context.CopyResource(readable_texture, &texture) };
+    unsafe { self.device_context.CopyResource(texture, &new_texture) };
 
-    let r = cb((readable_texture.cast().unwrap(), frame_info));
+    let r = cb(frame_info);
 
     unsafe { self.output_duplication.ReleaseFrame() }.map_err(Error::from_win_err(stringify!(
       IDXGIOutputDuplication.ReleaseFrame
@@ -173,9 +174,9 @@ impl Monitor {
   pub fn next_frame(
     &self,
     timeout_ms: u32,
-    readable_texture: &ID3D11Texture2D,
-  ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
-    self.process_next_frame(timeout_ms, readable_texture, |r| r)
+    texture: &ID3D11Texture2D,
+  ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    self.process_next_frame(timeout_ms, texture, |r| r)
   }
 
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
@@ -183,17 +184,16 @@ impl Monitor {
   pub fn next_frame_with_pointer_shape(
     &self,
     timeout_ms: u32,
-    readable_texture: &ID3D11Texture2D,
+    texture: &ID3D11Texture2D,
     pointer_shape_buffer: &mut Vec<u8>,
   ) -> Result<(
-    IDXGISurface1,
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
   )> {
     self
-      .process_next_frame(timeout_ms, readable_texture, |(surface, frame_info)| {
+      .process_next_frame(timeout_ms, texture, |frame_info| {
         if !frame_info.pointer_shape_updated() {
-          return Ok((surface, frame_info, None));
+          return Ok((frame_info, None));
         }
 
         // resize buffer if needed
@@ -219,7 +219,7 @@ impl Monitor {
         // fix buffer size
         pointer_shape_buffer.truncate(size as usize);
 
-        Ok((surface, frame_info, Some(pointer_shape_info)))
+        Ok((frame_info, Some(pointer_shape_info)))
       })
       .and_then(|r| r)
   }

@@ -1,8 +1,11 @@
 use crate::{Error, Result};
 use std::ptr;
-use windows::Win32::Graphics::{
-  Direct3D11::D3D11_TEXTURE2D_DESC,
-  Dxgi::{IDXGISurface1, DXGI_MAPPED_RECT, DXGI_MAP_READ},
+use windows::{
+  core::Interface,
+  Win32::Graphics::{
+    Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
+    Dxgi::{IDXGISurface1, DXGI_MAPPED_RECT, DXGI_MAP_READ},
+  },
 };
 
 pub mod custom;
@@ -15,11 +18,12 @@ pub mod simple;
 /// This function will dereference the provided pointer.
 /// The caller must ensure that the buffer is large enough to hold the frame.
 unsafe fn capture(
-  frame: &IDXGISurface1,
+  frame: &ID3D11Texture2D,
   dest: *mut u8,
   len: usize,
   texture_desc: &D3D11_TEXTURE2D_DESC,
 ) -> Result<()> {
+  let frame: IDXGISurface1 = frame.cast().unwrap();
   let mut mapped_surface = DXGI_MAPPED_RECT::default();
   let bytes_per_line = texture_desc.Width as usize * 4; // 4 for BGRA32
 
