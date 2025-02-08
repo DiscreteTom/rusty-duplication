@@ -52,48 +52,36 @@ pub type SharedMemoryCapturer = Capturer<SharedMemory>;
 impl SharedMemoryCapturer {
   /// Create an instance by creating a new shared memory with the provided name.
   pub fn create(monitor: Monitor, name: &str) -> Result<Self> {
-    Self::new(monitor, move |len| {
-      let name = CString::new(name).unwrap(); // make the name null terminated
+    Self::new(monitor, move |len| unsafe {
+      let file = CreateFileMappingA(
+        INVALID_HANDLE_VALUE,
+        None,
+        PAGE_READWRITE,
+        0,
+        len as u32,
+        str_to_pc_str(name),
+      )
+      .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
 
-      unsafe {
-        let file = CreateFileMappingA(
-          INVALID_HANDLE_VALUE,
-          None,
-          PAGE_READWRITE,
-          0,
-          len as u32,
-          PCSTR(name.as_ptr() as *const _),
-        )
-        .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
-
-        Ok(SharedMemory {
-          ptr: map_view_of_file(file, len)?,
-          len,
-          file,
-        })
-      }
+      Ok(SharedMemory {
+        ptr: map_view_of_file(file, len)?,
+        len,
+        file,
+      })
     })
   }
 
   /// Create an instance by opening an existing shared memory with the provided name.
   pub fn open(monitor: Monitor, name: &str) -> Result<Self> {
-    Self::new(monitor, move |len| {
-      let name = CString::new(name).unwrap(); // make the name null terminated
-
-      unsafe {
-        let file = OpenFileMappingA(
-          FILE_MAP_ALL_ACCESS.0,
-          false,
-          PCSTR(name.as_ptr() as *const _),
-        )
+    Self::new(monitor, move |len| unsafe {
+      let file = OpenFileMappingA(FILE_MAP_ALL_ACCESS.0, false, str_to_pc_str(name))
         .map_err(Error::from_win_err(stringify!(OpenFileMappingA)))?;
 
-        Ok(SharedMemory {
-          ptr: map_view_of_file(file, len)?,
-          len,
-          file,
-        })
-      }
+      Ok(SharedMemory {
+        ptr: map_view_of_file(file, len)?,
+        len,
+        file,
+      })
     })
   }
 }
@@ -113,6 +101,12 @@ unsafe fn map_view_of_file(file: HANDLE, buffer_size: usize) -> Result<*mut u8> 
   }
 
   Ok(buffer_ptr.Value as *mut u8)
+}
+
+#[inline]
+fn str_to_pc_str(s: &str) -> PCSTR {
+  let c_str = CString::new(s).unwrap(); // make the name null terminated
+  PCSTR(c_str.as_ptr() as _)
 }
 
 #[cfg(test)]
