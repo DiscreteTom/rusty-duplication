@@ -149,6 +149,14 @@ impl Capturer for SharedCapturer {
     &self.monitor
   }
 
+  fn texture(&self) -> &ID3D11Texture2D {
+    &self.texture
+  }
+
+  fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC {
+    &self.texture_desc
+  }
+
   fn buffer(&self) -> &[u8] {
     unsafe { slice::from_raw_parts(self.buffer, self.buffer_size) }
   }

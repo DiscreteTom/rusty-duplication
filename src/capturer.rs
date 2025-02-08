@@ -21,6 +21,10 @@ pub use vec::*;
 pub trait Capturer {
   fn monitor(&self) -> &Monitor;
 
+  fn texture(&self) -> &ID3D11Texture2D;
+
+  fn texture_desc(&self) -> &D3D11_TEXTURE2D_DESC;
+
   /// Get the buffer of the last captured frame.
   /// The buffer is in BGRA32 format.
   fn buffer(&self) -> &[u8];

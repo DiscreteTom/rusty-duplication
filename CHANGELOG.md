@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Capturer::monitor`.
 - `Capturer::pointer_shape_buffer_mut`.
 - `Capturer::capture_unchecked` and `Capturer::capture_with_pointer_shape_unchecked`.
+- `Capturer::texture` and `Capturer::texture_desc`.
 
 ### Changed
 
