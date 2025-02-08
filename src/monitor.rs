@@ -168,7 +168,7 @@ impl Monitor {
   /// Get the next frame without pointer shape.
   ///
   /// To get the pointer shape, use [`Self::next_frame_with_pointer_shape`].
-  pub fn next_frame(
+  pub(crate) fn next_frame(
     &self,
     timeout_ms: u32,
     texture: &ID3D11Texture2D,
@@ -178,7 +178,7 @@ impl Monitor {
 
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
   /// This will resize `pointer_shape_buffer` if needed and update it.
-  pub fn next_frame_with_pointer_shape(
+  pub(crate) fn next_frame_with_pointer_shape(
     &self,
     timeout_ms: u32,
     texture: &ID3D11Texture2D,
