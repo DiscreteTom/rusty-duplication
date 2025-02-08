@@ -67,12 +67,22 @@ impl Monitor {
   }
 
   /// This is usually used to get the screen's position and size.
+  /// # Examples
+  /// ```
+  /// use rusty_duplication::{Scanner, OutputDescExt};
+  ///
+  /// let monitor = Scanner::new().unwrap().next().unwrap();
+  /// let desc = monitor.dxgi_output_desc().unwrap();
+  /// println!("{}x{}", desc.width(), desc.height());
+  /// ```
+  #[inline]
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
     unsafe { self.output.GetDesc() }
       .map_err(Error::from_win_err(stringify!(DXGI_OUTPUT_DESC.GetDesc)))
   }
 
   /// This is usually used to get the screen's pixel width/height and buffer size.
+  #[inline]
   pub fn dxgi_outdupl_desc(&self) -> DXGI_OUTDUPL_DESC {
     unsafe { self.output_duplication.GetDesc() }
   }
