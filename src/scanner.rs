@@ -25,7 +25,7 @@ use windows::{
 /// // get the next available monitor
 /// let ctx = scanner.next().unwrap();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Scanner {
   next_adapter_index: u32,
   next_output_index: u32,
