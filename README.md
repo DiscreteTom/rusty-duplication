@@ -14,82 +14,102 @@ cargo add rusty-duplication
 
 ## Usage
 
-```rs
-use rusty_duplication::{
-  capturer::model::Capturer,
-  manager::Manager,
-  utils::{FrameInfoExt, OutputDescExt},
-};
+### Basic Usage
+
+```rust
+use rusty_duplication::{FrameInfoExt, Scanner, VecCapturer};
 use std::{fs::File, io::Write, thread, time::Duration};
 
-fn main() {
-  // create a manager
-  let mut manager = Manager::default();
-  // refresh monitor info
-  manager.refresh().unwrap();
+// create a scanner to scan for monitors
+let mut scanner = Scanner::new().unwrap();
 
-  // you can get monitor info before capturing start
-  // for ctx in &manager.contexts {
-  //   ctx.dxgi_output_desc().unwrap();
-  //   ctx.dxgi_outdupl_desc();
-  // }
+// scanner implements Iterator, you can use it to iterate through monitors
+let monitor = scanner.next().unwrap();
 
-  // create capturer for a display
-  // this will allocate memory buffer to store pixel data
-  let mut capturer = manager.contexts[0].simple_capturer().unwrap();
+// get monitor info
+monitor.dxgi_output_desc().unwrap();
+monitor.dxgi_outdupl_desc();
 
-  // you can also get monitor info from a capturer
-  let dxgi_outdupl_desc = capturer.dxgi_outdupl_desc().unwrap();
-  let dxgi_output_desc = capturer.dxgi_output_desc().unwrap();
-  // get resolution width/height
-  println!("size: {}x{}", dxgi_outdupl_desc.ModeDesc.Width, dxgi_outdupl_desc.ModeDesc.Height);
-  // get position
-  println!("left: {}, top: {}, right: {}, bottom: {}", dxgi_output_desc.DesktopCoordinates.left, dxgi_output_desc.DesktopCoordinates.top, dxgi_output_desc.DesktopCoordinates.right, dxgi_output_desc.DesktopCoordinates.bottom);
+// create a vec capturer for a monitor
+// this will allocate memory buffer to store pixel data
+let mut capturer: VecCapturer = monitor.try_into().unwrap();
 
-  // sleep for a while before capture to wait system to update the screen
-  thread::sleep(Duration::from_millis(100));
+// you can also get monitor info from a capturer
+let dxgi_outdupl_desc = capturer.monitor().dxgi_outdupl_desc();
+let dxgi_output_desc = capturer.monitor().dxgi_output_desc().unwrap();
+// get resolution width/height
+println!(
+  "size: {}x{}",
+  dxgi_outdupl_desc.ModeDesc.Width, dxgi_outdupl_desc.ModeDesc.Height
+);
+// get position
+println!(
+  "left: {}, top: {}, right: {}, bottom: {}",
+  dxgi_output_desc.DesktopCoordinates.left,
+  dxgi_output_desc.DesktopCoordinates.top,
+  dxgi_output_desc.DesktopCoordinates.right,
+  dxgi_output_desc.DesktopCoordinates.bottom
+);
 
-  // capture desktop image and get the frame info
-  // `safe_capture` will check if the buffer's size is enough
-  let info = capturer.safe_capture().unwrap();
+// sleep for a while before capture to wait system to update the screen
+thread::sleep(Duration::from_millis(100));
 
-  // check if this is a new frame using the extension method `desktop_updated`
-  if info.desktop_updated() {
-    println!("captured!");
-  }
+// capture desktop image and get the frame info
+let info = capturer.capture().unwrap();
 
-  // write to a file
-  // `buffer()` will return `&[u8]` in BGRA32 format
-  let mut file = File::create("capture.bin").unwrap();
-  file.write_all(capturer.buffer()).unwrap();
+// we have some extension methods for the frame info
+if info.desktop_updated() {
+  println!("captured!");
 }
-```
+if info.mouse_updated() {
+  println!("mouse updated!");
+}
+if info.pointer_shape_updated() {
+  println!("pointer shape updated!");
+}
 
-## Advanced Usage
+// write to a file
+let mut file = File::create("capture.bin").unwrap();
+// the buffer is in BGRA32 format
+file.write_all(&capturer.buffer).unwrap();
+```
 
 ### Shared Memory
 
-You can use shared memory to share the buffer between processes.
+You can use shared memory to share the frame buffer between processes.
 
-This lib provides a `SharedCapturer` which will use Windows shared memory to store the buffer. Just call `DuplicateContext.shared_capturer` with a name.
+```rust
+use rusty_duplication::{CapturerBuffer, FrameInfoExt, Scanner, SharedMemoryCapturer};
+use std::{fs::File, io::Write, thread, time::Duration};
 
-```rs
-manager.contexts[0].shared_capturer("Global\\MyFileMappingObject").unwrap();
+let monitor = Scanner::new().unwrap().next().unwrap();
+
+// create a shared memory capturer by creating a shared memory with the provided name
+let mut capturer = SharedMemoryCapturer::create(monitor, "SharedMemoryName").unwrap();
+// you can also use `SharedMemoryCapturer::open` to open an existing shared memory
+
+// sleep for a while before capture to wait system to update the screen
+thread::sleep(Duration::from_millis(50));
+
+let info = capturer.capture().unwrap();
+assert!(info.desktop_updated());
+
+// write to a file
+let mut file = File::create("capture.bin").unwrap();
+// the buffer is in BGRA32 format
+file.write_all(capturer.buffer.as_bytes()).unwrap();
 ```
 
-> **Note**: if your memory name starts with `Global\\`, you may need to run this in administrator mode. See the [doc](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga).
+> [!NOTE]
+> If your shared memory name starts with `Global\`, you may need to run your app in administrator mode. See https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createfilemappinga.
 
 ### Customized Capturer
 
-This lib provides low-level APIs like [`DuplicateContext`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/duplicate_context.rs), so you can write your own capturer. You can refer to [`SimpleCapturer`](https://github.com/DiscreteTom/rusty-duplication/blob/main/src/capturer/simple.rs)'s implementation.
+You can implement `CapturerBuffer` for your own type to create a customized capturer. You can refer to [`VecCapturer`](./src/capturer/vec.rs)'s implementation.
 
-### Test
+## [Examples](./examples/)
 
-```sh
-cargo test
-```
-
-> **Note**: move your mouse during the test to make sure the mouse pointer is captured, also make sure your mouse is in the primary monitor.
+## [Documentation](https://docs.rs/rusty-duplication/)
 
 ## Credit
 
@@ -99,4 +119,4 @@ This project is based on the following projects:
 - https://github.com/microsoft/windows-rs
 - https://github.com/hecomi/uDesktopDuplication
 
-## [CHANGELOG](https://github.com/DiscreteTom/rusty-duplication/blob/main/CHANGELOG.md)
+## [CHANGELOG](./CHANGELOG.md)
