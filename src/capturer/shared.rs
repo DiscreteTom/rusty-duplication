@@ -127,7 +127,7 @@ mod tests {
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(50));
 
-    let info = capturer.capture(300).unwrap();
+    let info = capturer.capture().unwrap();
     assert!(info.desktop_updated());
 
     // ensure buffer not all zero
@@ -136,7 +136,7 @@ mod tests {
     thread::sleep(Duration::from_millis(50));
 
     // check mouse
-    let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape(300).unwrap();
+    let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape().unwrap();
     if frame_info.mouse_updated() {
       assert!(pointer_shape_info.is_some());
       // make sure pointer shape buffer is not all zero

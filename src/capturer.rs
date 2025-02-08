@@ -28,6 +28,9 @@ pub trait CapturerBuffer {
 pub struct Capturer<Buffer> {
   pub pointer_shape_buffer: Vec<u8>,
   pub buffer: Buffer,
+  /// Timeout in milliseconds for the next frame.
+  /// By default it is 300ms.
+  pub timeout_ms: u32,
 
   monitor: Monitor,
   texture: ID3D11Texture2D,
@@ -52,6 +55,7 @@ impl<Buffer> Capturer<Buffer> {
       texture,
       texture_desc,
       pointer_shape_buffer: Vec::new(),
+      timeout_ms: 300,
     })
   }
 
@@ -78,11 +82,11 @@ impl<Buffer> Capturer<Buffer> {
   /// # Safety
   /// You have to ensure [`Self::buffer`] is large enough to hold the frame.
   /// You can use [`Self::check_buffer`] to check the buffer size.
-  pub unsafe fn capture_unchecked(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>
+  pub unsafe fn capture_unchecked(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>
   where
     Buffer: CapturerBuffer,
   {
-    let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
+    let frame_info = self.monitor.next_frame(self.timeout_ms, &self.texture)?;
 
     capture(
       &self.texture,
@@ -97,12 +101,12 @@ impl<Buffer> Capturer<Buffer> {
   ///
   /// This will call [`Self::check_buffer`] to check the buffer size.
   #[inline]
-  pub fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>
+  pub fn capture(&mut self) -> Result<DXGI_OUTDUPL_FRAME_INFO>
   where
     Buffer: CapturerBuffer,
   {
     self.check_buffer()?;
-    unsafe { self.capture_unchecked(timeout_ms) }
+    unsafe { self.capture_unchecked() }
   }
 
   /// Capture the screen and return the frame info.
@@ -115,7 +119,6 @@ impl<Buffer> Capturer<Buffer> {
   /// You can use [`Self::check_buffer`] to check the buffer size.
   pub unsafe fn capture_with_pointer_shape_unchecked(
     &mut self,
-    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
@@ -124,7 +127,7 @@ impl<Buffer> Capturer<Buffer> {
     Buffer: CapturerBuffer,
   {
     let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
-      timeout_ms,
+      self.timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
     )?;
@@ -148,7 +151,6 @@ impl<Buffer> Capturer<Buffer> {
   #[inline]
   pub fn capture_with_pointer_shape(
     &mut self,
-    timeout_ms: u32,
   ) -> Result<(
     DXGI_OUTDUPL_FRAME_INFO,
     Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
@@ -157,7 +159,7 @@ impl<Buffer> Capturer<Buffer> {
     Buffer: CapturerBuffer,
   {
     self.check_buffer()?;
-    unsafe { self.capture_with_pointer_shape_unchecked(timeout_ms) }
+    unsafe { self.capture_with_pointer_shape_unchecked() }
   }
 }
 
