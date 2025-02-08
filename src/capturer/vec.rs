@@ -40,43 +40,26 @@ mod tests {
 
   #[test]
   #[serial]
-  fn simple_capturer() {
+  fn vec_capturer() {
     let monitor = Scanner::new().unwrap().next().unwrap();
     let mut capturer: VecCapturer = monitor.try_into().unwrap();
 
     // sleep for a while before capture to wait system to update the screen
-    thread::sleep(Duration::from_millis(100));
+    thread::sleep(Duration::from_millis(50));
 
     let info = capturer.capture(300).unwrap();
     assert!(info.desktop_updated());
 
-    let buffer = capturer.buffer.as_bytes();
     // ensure buffer not all zero
-    let mut all_zero = true;
-    for i in 0..buffer.len() {
-      if buffer[i] != 0 {
-        all_zero = false;
-        break;
-      }
-    }
-    assert!(!all_zero);
+    assert!(!capturer.buffer.as_bytes().iter().all(|&n| n == 0));
 
-    // sleep for a while before capture to wait system to update the mouse
-    thread::sleep(Duration::from_millis(1000));
+    thread::sleep(Duration::from_millis(50));
 
-    // check pointer shape
+    // check mouse
     let (frame_info, pointer_shape_info) = capturer.capture_with_pointer_shape(300).unwrap();
     assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
-    let pointer_shape_data = capturer.pointer_shape_buffer;
     // make sure pointer shape buffer is not all zero
-    let mut all_zero = true;
-    for i in 0..pointer_shape_data.len() {
-      if pointer_shape_data[i] != 0 {
-        all_zero = false;
-        break;
-      }
-    }
-    assert!(!all_zero);
+    assert!(!capturer.pointer_shape_buffer.iter().all(|&n| n == 0));
   }
 }
