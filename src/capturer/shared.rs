@@ -88,20 +88,7 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      // Call MapViewOfFile and check for failure:
-      let buffer_ptr = MapViewOfFile(
-        file,                // handle to map object
-        FILE_MAP_ALL_ACCESS, // read/write permission
-        0,
-        0,
-        buffer_size,
-      );
-
-      if buffer_ptr.Value.is_null() {
-        let _ = CloseHandle(file);
-        return Err(Error::new("MapViewOfFile returned null"));
-      }
-      let buffer = buffer_ptr.Value as *mut u8;
+      let buffer = Self::map_view_of_file(file, buffer_size)?;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
@@ -128,30 +115,36 @@ impl<'a> SharedCapturer<'a> {
       )
       .map_err(|e| Error::windows("CreateFileMappingA", e))?;
 
-      let buffer_ptr = MapViewOfFile(
-        file,                // handle to map object
-        FILE_MAP_ALL_ACCESS, // read/write permission
-        0,
-        0,
-        buffer_size,
-      );
-
-      if buffer_ptr.Value.is_null() {
-        let _ = CloseHandle(file);
-        return Err(Error::new("MapViewOfFile returned null"));
-      }
-      let buffer = buffer_ptr.Value as *mut u8;
+      let buffer = Self::map_view_of_file(file, buffer_size)?;
       Ok((buffer, buffer_size, file, texture, texture_desc))
     }
   }
 
   fn free(&self) {
     unsafe {
-      let _ = UnmapViewOfFile(MEMORY_MAPPED_VIEW_ADDRESS {
-        Value: self.buffer as *mut core::ffi::c_void,
-      });
-      let _ = CloseHandle(self.file);
+      UnmapViewOfFile(MEMORY_MAPPED_VIEW_ADDRESS {
+        Value: self.buffer as _,
+      })
+      .ok();
+      CloseHandle(self.file).ok();
     }
+  }
+
+  unsafe fn map_view_of_file(file: HANDLE, buffer_size: usize) -> Result<*mut u8> {
+    let buffer_ptr = MapViewOfFile(
+      file,                // handle to map object
+      FILE_MAP_ALL_ACCESS, // read/write permission
+      0,
+      0,
+      buffer_size,
+    );
+
+    if buffer_ptr.Value.is_null() {
+      CloseHandle(file).ok();
+      return Err(Error::new("MapViewOfFile"));
+    }
+
+    Ok(buffer_ptr.Value as *mut u8)
   }
 }
 

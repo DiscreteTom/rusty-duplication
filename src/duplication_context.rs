@@ -58,9 +58,7 @@ impl DuplicationContext {
 
   /// This is usually used to get the screen's position and size.
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    let ret = unsafe { self.output.GetDesc() }
-      .map_err(|e| Error::windows("DXGI_OUTPUT_DESC.GetDesc", e))?;
-    Ok(ret)
+    unsafe { self.output.GetDesc() }.map_err(|e| Error::windows("DXGI_OUTPUT_DESC.GetDesc", e))
   }
 
   /// This is usually used to get the screen's pixel width/height and buffer size.

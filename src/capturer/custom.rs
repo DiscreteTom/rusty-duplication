@@ -119,9 +119,8 @@ impl Capturer for CustomCapturer<'_> {
   }
 }
 
-#[allow(elided_named_lifetimes)]
 impl DuplicationContext {
-  pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer> {
+  pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer<'a>> {
     CustomCapturer::<'a>::new(self, buffer)
   }
 }

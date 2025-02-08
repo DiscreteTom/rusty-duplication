@@ -64,7 +64,7 @@ impl Manager {
     // prepare device and output
     for (adapter, outputs) in adapter_outputs {
       let mut device: Option<ID3D11Device> = None;
-      let mut device_context: Option<ID3D11DeviceContext> = None.clone();
+      let mut device_context: Option<ID3D11DeviceContext> = None;
       let mut feature_level = D3D_FEATURE_LEVEL_9_1;
 
       // create device for each adapter
@@ -82,9 +82,8 @@ impl Manager {
         )
       }
       .map_err(|e| Error::windows("D3D11CreateDevice", e))?;
-      let device = match device {
-        Some(dev) => dev,
-        None => continue
+      let Some(device) = device else {
+        continue;
       };
       let device_context = device_context.unwrap();
 
