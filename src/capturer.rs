@@ -175,6 +175,7 @@ unsafe fn capture(
     frame
       .Map(&mut mapped_surface, DXGI_MAP_READ)
       .map_err(Error::from_win_err(stringify!(IDXGISurface1.Map)))?;
+
     if mapped_surface.Pitch as usize == bytes_per_line {
       ptr::copy_nonoverlapping(mapped_surface.pBits, dest.as_mut_ptr(), dest.len());
     } else {
@@ -191,6 +192,7 @@ unsafe fn capture(
         dest_offset += bytes_per_line as isize;
       }
     }
+
     frame
       .Unmap()
       .map_err(Error::from_win_err(stringify!(IDXGISurface1.Unmap)))
