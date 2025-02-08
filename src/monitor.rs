@@ -225,7 +225,11 @@ impl Monitor {
       .and_then(|r| r)
   }
 
-  pub fn capture(
+  /// Capture the next frame to the provided buffer.
+  /// # Safety
+  /// This function will dereference the provided pointer.
+  /// The caller must ensure that the buffer is large enough to hold the frame.
+  pub(crate) unsafe fn capture(
     &self,
     dest: *mut u8,
     len: usize,
@@ -263,7 +267,10 @@ impl Monitor {
 
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
   /// and this will resize `pointer_shape_buffer` if needed and update it.
-  pub fn capture_with_pointer_shape(
+  /// # Safety
+  /// This function will dereference the provided pointer.
+  /// The caller must ensure that the buffer is large enough to hold the frame.
+  pub(crate) unsafe fn capture_with_pointer_shape(
     &self,
     dest: *mut u8,
     len: usize,
@@ -331,15 +338,16 @@ mod tests {
     // sleep for a while before capture to wait system to update the screen
     thread::sleep(Duration::from_millis(100));
 
-    let info = contexts[0]
-      .capture(
+    let info = unsafe {
+      contexts[0].capture(
         buffer.as_mut_ptr(),
         buffer.len(),
         300,
         &texture,
         &texture_desc,
       )
-      .unwrap();
+    }
+    .unwrap();
     assert!(info.desktop_updated());
 
     // ensure buffer not all zero
@@ -357,8 +365,8 @@ mod tests {
 
     // check pointer
     let mut pointer_shape_buffer = vec![0u8; info.PointerShapeBufferSize as usize];
-    let (frame_info, pointer_shape_info) = contexts[0]
-      .capture_with_pointer_shape(
+    let (frame_info, pointer_shape_info) = unsafe {
+      contexts[0].capture_with_pointer_shape(
         buffer.as_mut_ptr(),
         buffer.len(),
         300,
@@ -366,7 +374,8 @@ mod tests {
         &texture_desc,
         &mut pointer_shape_buffer,
       )
-      .unwrap();
+    }
+    .unwrap();
     assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
 

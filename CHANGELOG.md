@@ -22,8 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `Manager`. Use `Scanner` instead.
 - `Monitor::new`. Use `Scanner` instead.
+- `Monitor::create_readable_texture`, `Monitor::capture` and `Monitor::capture_with_pointer_shape`.
 - `MouseUpdateStatus`. Use `FrameInfoExt::mouse_updated` and `FrameInfoExt::pointer_shape_updated` instead.
-- `Monitor::create_readable_texture`.
 
 ## [0.5.0] - 2023-05-08
 
