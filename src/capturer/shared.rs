@@ -86,7 +86,7 @@ impl<'a> SharedCapturer<'a> {
         buffer_size as u32,
         PCSTR(name.as_ptr() as *const _),
       )
-      .map_err(|e| Error::windows("CreateFileMappingA", e))?;
+      .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
 
       let buffer = Self::map_view_of_file(file, buffer_size)?;
       Ok((buffer, buffer_size, file, texture, texture_desc))
@@ -113,7 +113,7 @@ impl<'a> SharedCapturer<'a> {
         false,
         PCSTR(name.as_ptr() as *const _),
       )
-      .map_err(|e| Error::windows("CreateFileMappingA", e))?;
+      .map_err(Error::from_win_err(stringify!(CreateFileMappingA)))?;
 
       let buffer = Self::map_view_of_file(file, buffer_size)?;
       Ok((buffer, buffer_size, file, texture, texture_desc))
@@ -141,10 +141,7 @@ impl<'a> SharedCapturer<'a> {
 
     if buffer_ptr.Value.is_null() {
       CloseHandle(file).ok();
-      return Err(Error::windows(
-        stringify!(MapViewOfFile),
-        windows::core::Error::from_win32(),
-      ));
+      return Err(Error::last_win_err(stringify!(MapViewOfFile)));
     }
 
     Ok(buffer_ptr.Value as *mut u8)

@@ -36,7 +36,7 @@ impl Manager {
     self.contexts.clear();
 
     let factory = unsafe { CreateDXGIFactory1::<IDXGIFactory1>() }
-      .map_err(|e| Error::windows("CreateDXGIFactory1", e))?;
+      .map_err(Error::from_win_err(stringify!(CreateDXGIFactory1)))?;
     let mut adapter_outputs = Vec::new();
 
     // collect adapters and outputs
@@ -80,7 +80,7 @@ impl Manager {
           Some(&mut device_context),
         )
       }
-      .map_err(|e| Error::windows("D3D11CreateDevice", e))?;
+      .map_err(Error::from_win_err(stringify!(D3D11CreateDevice)))?;
       let Some(device) = device else {
         continue;
       };
@@ -90,7 +90,7 @@ impl Manager {
       for output in outputs {
         let output = output.cast::<IDXGIOutput1>().unwrap();
         let output_duplication = unsafe { output.DuplicateOutput(&device) }
-          .map_err(|e| Error::windows("DuplicateOutput", e))?;
+          .map_err(Error::from_win_err(stringify!(DuplicateOutput)))?;
         self.contexts.push(DuplicationContext::new(
           device.clone(),
           device_context.clone(),

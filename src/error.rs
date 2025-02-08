@@ -21,14 +21,20 @@ pub enum Error {
 impl Error {
   /// Create a new Windows error.
   #[inline]
-  pub(crate) const fn windows(api: &'static str, err: windows::core::Error) -> Self {
+  const fn windows(api: &'static str, err: windows::core::Error) -> Self {
     Self::Windows { api, err }
   }
 
   /// Create a new Windows error from `GetLastError`.
   #[inline]
-  pub(crate) fn from_win32(api: &'static str) -> Self {
+  pub(crate) fn last_win_err(api: &'static str) -> Self {
     Self::windows(api, windows::core::Error::from_win32())
+  }
+
+  /// Return an error mapper to convert a Windows error to an [`Error`].
+  #[inline]
+  pub(crate) fn from_win_err(api: &'static str) -> impl FnOnce(windows::core::Error) -> Self {
+    move |e| Self::windows(api, e)
   }
 }
 

@@ -54,13 +54,14 @@ impl DuplicationContext {
     if unsafe { GetMonitorInfoW(h_monitor, &mut info).as_bool() } {
       Ok(info)
     } else {
-      Err(Error::from_win32(stringify!(GetMonitorInfoW)))
+      Err(Error::last_win_err(stringify!(GetMonitorInfoW)))
     }
   }
 
   /// This is usually used to get the screen's position and size.
   pub fn dxgi_output_desc(&self) -> Result<DXGI_OUTPUT_DESC> {
-    unsafe { self.output.GetDesc() }.map_err(|e| Error::windows("DXGI_OUTPUT_DESC.GetDesc", e))
+    unsafe { self.output.GetDesc() }
+      .map_err(Error::from_win_err(stringify!(DXGI_OUTPUT_DESC.GetDesc)))
   }
 
   /// This is usually used to get the screen's pixel width/height and buffer size.
@@ -106,7 +107,7 @@ impl DuplicationContext {
         .device
         .CreateTexture2D(&texture_desc, None, Some(&mut readable_texture))
     }
-    .map_err(|e| Error::windows("CreateTexture2D", e))?;
+    .map_err(Error::from_win_err(stringify!(CreateTexture2D)))?;
     let readable_texture = readable_texture.unwrap();
     // Lower priorities causes stuff to be needlessly copied from gpu to ram,
     // causing huge ram usage on some systems.
@@ -128,7 +129,7 @@ impl DuplicationContext {
         .output_duplication
         .AcquireNextFrame(self.timeout_ms, &mut frame_info, &mut resource)
     }
-    .map_err(|e| Error::windows("AcquireNextFrame", e))?;
+    .map_err(Error::from_win_err(stringify!(AcquireNextFrame)))?;
     let texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
 
     // copy GPU texture to readable texture
@@ -138,7 +139,8 @@ impl DuplicationContext {
   }
 
   fn release_frame(&self) -> Result<()> {
-    unsafe { self.output_duplication.ReleaseFrame() }.map_err(|e| Error::windows("ReleaseFrame", e))
+    unsafe { self.output_duplication.ReleaseFrame() }
+      .map_err(Error::from_win_err(stringify!(ReleaseFrame)))
   }
 
   pub fn next_frame(
@@ -186,7 +188,7 @@ impl DuplicationContext {
           &mut size,
           &mut pointer_shape_info,
         )
-        .map_err(|e| Error::windows("GetFramePointerShape", e))
+        .map_err(Error::from_win_err(stringify!(GetFramePointerShape)))
     } {
       Ok(_) => {
         self.release_frame()?;
@@ -213,7 +215,7 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(|e| Error::windows("Map", e))?;
+        .map_err(Error::from_win_err(stringify!(Map)))?;
       if mapped_surface.Pitch as usize == line_bytes {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
@@ -226,7 +228,9 @@ impl DuplicationContext {
           ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
         }
       }
-      frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
+      frame
+        .Unmap()
+        .map_err(Error::from_win_err(stringify!(Unmap)))?;
     }
 
     Ok(frame_info)
@@ -253,7 +257,7 @@ impl DuplicationContext {
     unsafe {
       frame
         .Map(&mut mapped_surface, DXGI_MAP_READ)
-        .map_err(|e| Error::windows("Map", e))?;
+        .map_err(Error::from_win_err(stringify!(Map)))?;
       if mapped_surface.Pitch as usize == line_bytes {
         ptr::copy_nonoverlapping(mapped_surface.pBits, dest, len);
       } else {
@@ -266,7 +270,9 @@ impl DuplicationContext {
           ptr::copy_nonoverlapping(src, dest, mapped_surface.Pitch as usize);
         }
       }
-      frame.Unmap().map_err(|e| Error::windows("Unmap", e))?;
+      frame
+        .Unmap()
+        .map_err(Error::from_win_err(stringify!(Unmap)))?;
     }
 
     Ok((frame_info, pointer_shape_info))
