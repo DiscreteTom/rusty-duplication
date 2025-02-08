@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod capturer;
 mod error;
 mod ext;
@@ -9,3 +11,7 @@ pub use error::*;
 pub use ext::*;
 pub use monitor::*;
 pub use scanner::*;
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+mod readme {}
