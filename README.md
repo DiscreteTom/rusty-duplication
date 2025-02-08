@@ -23,10 +23,10 @@ use rusty_duplication::{
 use std::{fs::File, io::Write, thread, time::Duration};
 
 fn main() {
-  // manager will collect monitor info when created
-  let manager = Manager::default().unwrap();
-  // you can also refresh monitor info manually
-  // manager.refresh();
+  // create a manager
+  let mut manager = Manager::default();
+  // refresh monitor info
+  manager.refresh().unwrap();
 
   // you can get monitor info before capturing start
   // for ctx in &manager.contexts {

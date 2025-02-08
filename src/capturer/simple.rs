@@ -1,7 +1,7 @@
 use super::model::Capturer;
 use crate::duplication_context::DuplicationContext;
-use crate::Error;
 use crate::utils::OutDuplDescExt;
+use crate::Error;
 use crate::Result;
 use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::{
@@ -132,7 +132,8 @@ mod tests {
   #[test]
   #[serial]
   fn simple_capturer() {
-    let manager = Manager::default().unwrap();
+    let mut manager = Manager::default();
+    manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);
 
     let mut capturer = manager.contexts[0].simple_capturer().unwrap();

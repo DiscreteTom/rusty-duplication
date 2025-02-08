@@ -285,7 +285,8 @@ mod tests {
   #[test]
   #[serial]
   fn duplication_context() {
-    let manager = Manager::default().unwrap();
+    let mut manager = Manager::default();
+    manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);
 
     // make sure only one primary monitor

@@ -252,7 +252,8 @@ mod tests {
   #[test]
   #[serial]
   fn shared_capturer() {
-    let manager = Manager::default().unwrap();
+    let mut manager = Manager::default();
+    manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);
 
     let mut capturer = manager.contexts[0]

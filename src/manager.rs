@@ -14,21 +14,20 @@ pub struct Manager {
   timeout_ms: u32,
 }
 
-impl Manager {
-  /// Create a new manager and refresh monitors info.
-  pub fn default() -> Result<Manager> {
+impl Default for Manager {
+  #[inline]
+  fn default() -> Self {
     Manager::new(300)
   }
+}
 
-  /// Create a new manager and refresh monitors info.
-  pub fn new(timeout_ms: u32) -> Result<Manager> {
-    let mut manager = Manager {
+impl Manager {
+  /// Create a new manager with the provided timeout.
+  #[inline]
+  pub const fn new(timeout_ms: u32) -> Manager {
+    Manager {
       contexts: Vec::new(),
       timeout_ms,
-    };
-    match manager.refresh() {
-      Ok(_) => Ok(manager),
-      Err(e) => Err(e),
     }
   }
 
@@ -113,7 +112,8 @@ mod tests {
   #[test]
   #[serial]
   fn manager() {
-    let mut manager = Manager::default().unwrap();
+    let mut manager = Manager::default();
+    manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);
     manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);

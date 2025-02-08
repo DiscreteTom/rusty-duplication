@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Rewrite `Error`.
 - Re-organize export.
+- `Manager::new` and `Manager::default` will return `Manager` instead of `Result<Manager>`, and they no longer refresh the device list.
 
 ## [0.5.0] - 2023-05-08
 

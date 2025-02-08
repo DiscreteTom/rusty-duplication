@@ -138,7 +138,8 @@ mod tests {
   #[test]
   #[serial]
   fn custom_capturer() {
-    let manager = Manager::default().unwrap();
+    let mut manager = Manager::default();
+    manager.refresh().unwrap();
     assert_ne!(manager.contexts.len(), 0);
 
     let ctx = &manager.contexts[0];
