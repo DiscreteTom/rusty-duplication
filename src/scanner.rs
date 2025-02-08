@@ -26,7 +26,7 @@ use windows::{
 /// let ctx = factory.next().unwrap();
 /// ```
 #[derive(Debug)]
-pub struct Factory {
+pub struct Scanner {
   next_adapter_index: u32,
   next_output_index: u32,
   factory: IDXGIFactory1,
@@ -35,7 +35,7 @@ pub struct Factory {
   device_context: ID3D11DeviceContext,
 }
 
-impl Factory {
+impl Scanner {
   /// Try to create a new factory.
   /// Return [`Err`] if no adapter is found.
   pub fn new() -> Result<Self> {
@@ -72,7 +72,7 @@ impl Factory {
   }
 }
 
-impl Iterator for Factory {
+impl Iterator for Scanner {
   type Item = Monitor;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -133,7 +133,7 @@ mod tests {
   #[test]
   #[serial]
   fn manager() {
-    let mut factory = Factory::new().unwrap();
+    let mut factory = Scanner::new().unwrap();
     assert!(factory.next().is_some());
   }
 }

@@ -1,7 +1,3 @@
-mod factory;
-
-pub use factory::*;
-
 use crate::{utils::FrameInfoExt, Error, Result};
 use std::ptr;
 use windows::{
@@ -31,12 +27,6 @@ pub struct Monitor {
 }
 
 impl Monitor {
-  /// See [`Factory::new`].
-  #[inline]
-  pub fn factory() -> Result<Factory> {
-    Factory::new()
-  }
-
   #[inline]
   pub const fn new(
     device: ID3D11Device,
@@ -300,15 +290,17 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt};
+  use crate::{
+    utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt},
+    Scanner,
+  };
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn monitor() {
-    let contexts = Monitor::factory().unwrap().collect::<Vec<_>>();
+    let contexts = Scanner::new().unwrap().collect::<Vec<_>>();
 
     // make sure only one primary monitor
     let mut primary_monitor_count = 0;

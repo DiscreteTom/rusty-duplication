@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- `Factory` to create `Monitor`.
+- `Scanner` to create `Monitor`.
 
 ### Changed
 
@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Removed
 
-- `Manager`. Use `Factory` instead.
+- `Manager`. Use `Scanner` instead.
 
 ## [0.5.0] - 2023-05-08
 

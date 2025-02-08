@@ -241,14 +241,14 @@ impl Drop for SharedCapturer<'_> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{capturer::model::Capturer, utils::FrameInfoExt, Monitor};
+  use crate::{capturer::model::Capturer, utils::FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn shared_capturer() {
-    let ctx = Monitor::factory().unwrap().next().unwrap();
+    let ctx = Scanner::new().unwrap().next().unwrap();
 
     let mut capturer = ctx.shared_capturer("RustyDuplicationTest").unwrap();
 

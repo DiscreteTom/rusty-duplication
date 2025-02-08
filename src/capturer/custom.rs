@@ -129,7 +129,7 @@ mod tests {
   use crate::{
     capturer::model::Capturer,
     utils::{FrameInfoExt, OutDuplDescExt},
-    Monitor,
+    Scanner,
   };
   use serial_test::serial;
   use std::{thread, time::Duration};
@@ -137,7 +137,7 @@ mod tests {
   #[test]
   #[serial]
   fn custom_capturer() {
-    let ctx = Monitor::factory().unwrap().next().unwrap();
+    let ctx = Scanner::new().unwrap().next().unwrap();
     let desc = ctx.dxgi_outdupl_desc();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();
