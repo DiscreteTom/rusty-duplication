@@ -1,5 +1,5 @@
-use super::{capture, model::Capturer};
-use crate::{Error, Monitor, OutDuplDescExt, Result};
+use super::capture;
+use crate::{Capturer, Error, Monitor, OutDuplDescExt, Result};
 use windows::Win32::Graphics::{
   Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
   Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
@@ -127,7 +127,7 @@ impl Capturer for SimpleCapturer {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{capturer::model::Capturer, FrameInfoExt, Scanner};
+  use crate::{Capturer, FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 

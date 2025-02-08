@@ -1,5 +1,5 @@
-use super::{capture, model::Capturer};
-use crate::{Error, Monitor, OutDuplDescExt, Result};
+use super::capture;
+use crate::{Capturer, Error, Monitor, OutDuplDescExt, Result};
 use std::ffi::CString;
 use std::slice;
 use windows::{
@@ -243,7 +243,7 @@ impl Drop for SharedCapturer {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::{capturer::model::Capturer, FrameInfoExt, Scanner};
+  use crate::{Capturer, FrameInfoExt, Scanner};
   use serial_test::serial;
   use std::{thread, time::Duration};
 

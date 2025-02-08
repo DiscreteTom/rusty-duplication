@@ -1,22 +1,74 @@
 mod custom;
-mod model;
 mod shared;
 mod simple;
 
-use crate::{Error, Result};
+use crate::{Error, Monitor, Result};
 use std::ptr;
 use windows::{
   core::Interface,
   Win32::Graphics::{
     Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
-    Dxgi::{IDXGISurface1, DXGI_MAPPED_RECT, DXGI_MAP_READ},
+    Dxgi::{
+      IDXGISurface1, DXGI_MAPPED_RECT, DXGI_MAP_READ, DXGI_OUTDUPL_FRAME_INFO,
+      DXGI_OUTDUPL_POINTER_SHAPE_INFO,
+    },
   },
 };
 
 pub use custom::*;
-pub use model::*;
 pub use shared::*;
 pub use simple::*;
+
+/// Capturer is stateful, it holds a buffer of the last captured frame.
+pub trait Capturer {
+  fn monitor(&self) -> &Monitor;
+
+  /// Get the buffer of the last captured frame.
+  /// The buffer is in BGRA32 format.
+  fn buffer(&self) -> &[u8];
+
+  /// Get the buffer of the last captured frame.
+  /// The buffer is in BGRA32 format.
+  fn buffer_mut(&mut self) -> &mut [u8];
+
+  /// Check buffer size.
+  fn check_buffer(&self) -> Result<()>;
+
+  /// Get the buffer of the captured pointer shape.
+  fn pointer_shape_buffer(&self) -> &[u8];
+
+  /// Capture the screen and return the frame info.
+  /// The pixel data is stored in the `buffer`.
+  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+
+  /// Check buffer size before capture.
+  /// The pixel data is stored in the `buffer`.
+  fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+
+  /// Capture the screen and return the frame info.
+  /// The pixel data is stored in the `buffer`.
+  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
+  /// The pointer shape is stored in the `pointer_shape_buffer`.
+  fn capture_with_pointer_shape(
+    &mut self,
+    timeout_ms: u32,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )>;
+
+  /// Check buffer size before capture.
+  /// The pixel data is stored in the `buffer`.
+  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
+  /// The pointer shape is stored in the `pointer_shape_buffer`.
+  fn safe_capture_with_pointer_shape(
+    &mut self,
+    timeout_ms: u32,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )>;
+}
 
 /// Capture the next frame to the provided buffer.
 /// # Safety
