@@ -1,5 +1,5 @@
 use super::capture;
-use crate::{Capturer, Error, Monitor, OutDuplDescExt, Result};
+use crate::{Capturer, Monitor, OutDuplDescExt, Result};
 use windows::Win32::Graphics::{
   Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
   Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO},
@@ -46,14 +46,6 @@ impl Capturer for SimpleCapturer {
 
   fn buffer_mut(&mut self) -> &mut [u8] {
     &mut self.buffer
-  }
-
-  fn check_buffer(&self) -> Result<()> {
-    if self.buffer.len() < self.monitor.dxgi_outdupl_desc().calc_buffer_size() {
-      Err(Error::InvalidBufferLength)
-    } else {
-      Ok(())
-    }
   }
 
   fn pointer_shape_buffer(&self) -> &[u8] {

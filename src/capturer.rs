@@ -2,7 +2,7 @@ mod custom;
 mod shared;
 mod simple;
 
-use crate::{Error, Monitor, Result};
+use crate::{Error, Monitor, OutDuplDescExt, Result};
 use std::ptr;
 use windows::{
   core::Interface,
@@ -32,8 +32,13 @@ pub trait Capturer {
   fn buffer_mut(&mut self) -> &mut [u8];
 
   /// Check buffer size.
-  fn check_buffer(&self) -> Result<()>;
-
+  fn check_buffer(&self) -> Result<()> {
+    if self.buffer().len() < self.monitor().dxgi_outdupl_desc().calc_buffer_size() {
+      Err(Error::InvalidBufferLength)
+    } else {
+      Ok(())
+    }
+  }
   /// Get the buffer of the captured pointer shape.
   fn pointer_shape_buffer(&self) -> &[u8];
 

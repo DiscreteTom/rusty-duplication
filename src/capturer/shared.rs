@@ -157,14 +157,6 @@ impl Capturer for SharedCapturer {
     unsafe { slice::from_raw_parts_mut(self.buffer, self.buffer_size) }
   }
 
-  fn check_buffer(&self) -> Result<()> {
-    if self.buffer_size < self.monitor.dxgi_outdupl_desc().calc_buffer_size() {
-      Err(Error::InvalidBufferLength)
-    } else {
-      Ok(())
-    }
-  }
-
   fn pointer_shape_buffer(&self) -> &[u8] {
     &self.pointer_shape_buffer
   }
