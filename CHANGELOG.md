@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Scanner` to create `Monitor`.
 - `FrameInfoExt::pointer_shape_updated`.
 - `Capturer::monitor`.
+- `Capturer::pointer_shape_buffer_mut`.
 
 ### Changed
 

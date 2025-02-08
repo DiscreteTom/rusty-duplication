@@ -62,6 +62,10 @@ impl Capturer for SimpleCapturer {
     &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
   }
 
+  fn pointer_shape_buffer_mut(&mut self) -> &mut [u8] {
+    &mut self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
+  }
+
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     let frame_info = self.monitor.next_frame(timeout_ms, &self.texture)?;
 
