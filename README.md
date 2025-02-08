@@ -85,7 +85,9 @@ This lib provides low-level APIs like [`DuplicateContext`](https://github.com/Di
 
 ### Test
 
-Run the tests using `cargo test -- --test-threads=1` to prevent the tests from running in parallel.
+```sh
+cargo test
+```
 
 > **Note**: move your mouse during the test to make sure the mouse pointer is captured, also make sure your mouse is in the primary monitor.
 

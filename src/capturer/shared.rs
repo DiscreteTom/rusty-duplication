@@ -242,11 +242,12 @@ impl<'a> Drop for SharedCapturer<'a> {
 
 #[cfg(test)]
 mod tests {
+  use crate::{capturer::model::Capturer, manager::Manager, utils::FrameInfoExt};
+  use serial_test::serial;
   use std::{thread, time::Duration};
 
-  use crate::{capturer::model::Capturer, manager::Manager, utils::FrameInfoExt};
-
   #[test]
+  #[serial]
   fn shared_capturer() {
     let manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);

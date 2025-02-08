@@ -127,15 +127,16 @@ impl DuplicationContext {
 
 #[cfg(test)]
 mod tests {
-  use std::{thread, time::Duration};
-
   use crate::{
     capturer::model::Capturer,
     manager::Manager,
     utils::{FrameInfoExt, OutDuplDescExt},
   };
+  use serial_test::serial;
+  use std::{thread, time::Duration};
 
   #[test]
+  #[serial]
   fn custom_capturer() {
     let manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);

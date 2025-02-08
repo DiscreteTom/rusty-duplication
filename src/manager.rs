@@ -108,8 +108,10 @@ impl Manager {
 #[cfg(test)]
 mod tests {
   use super::Manager;
+  use serial_test::serial;
 
   #[test]
+  #[serial]
   fn manager() {
     let mut manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);

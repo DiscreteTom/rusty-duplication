@@ -273,14 +273,15 @@ impl DuplicationContext {
 
 #[cfg(test)]
 mod tests {
-  use std::{thread, time::Duration};
-
   use crate::{
     manager::Manager,
     utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt},
   };
+  use serial_test::serial;
+  use std::{thread, time::Duration};
 
   #[test]
+  #[serial]
   fn duplication_context() {
     let manager = Manager::default().unwrap();
     assert_ne!(manager.contexts.len(), 0);
