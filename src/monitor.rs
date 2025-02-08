@@ -23,15 +23,16 @@ use windows::{
   },
 };
 
+/// Monitor context for screen duplication.
 /// This is stateless and immutable.
-pub struct DuplicationContext {
+pub struct Monitor {
   device: ID3D11Device,
   device_context: ID3D11DeviceContext,
   output: IDXGIOutput1,
   output_duplication: IDXGIOutputDuplication,
 }
 
-impl DuplicationContext {
+impl Monitor {
   /// See [`Factory::new`].
   #[inline]
   pub fn factory() -> Result<Factory> {
@@ -308,8 +309,8 @@ mod tests {
 
   #[test]
   #[serial]
-  fn duplication_context() {
-    let contexts = DuplicationContext::factory().unwrap().collect::<Vec<_>>();
+  fn monitor() {
+    let contexts = Monitor::factory().unwrap().collect::<Vec<_>>();
 
     // make sure only one primary monitor
     let mut primary_monitor_count = 0;

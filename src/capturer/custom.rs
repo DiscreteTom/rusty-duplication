@@ -1,7 +1,7 @@
 use super::model::Capturer;
-use crate::duplication_context::DuplicationContext;
 use crate::utils::OutDuplDescExt;
 use crate::Error;
+use crate::Monitor;
 use crate::Result;
 use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
@@ -13,7 +13,7 @@ use windows::Win32::Graphics::{
 /// Capture screen to a chunk of memory.
 pub struct CustomCapturer<'a> {
   buffer: &'a mut [u8],
-  ctx: &'a DuplicationContext,
+  ctx: &'a Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
@@ -22,7 +22,7 @@ pub struct CustomCapturer<'a> {
 
 impl<'a> CustomCapturer<'a> {
   pub fn with_texture(
-    ctx: &'a DuplicationContext,
+    ctx: &'a Monitor,
     buffer: &'a mut [u8],
     texture: ID3D11Texture2D,
     texture_desc: D3D11_TEXTURE2D_DESC,
@@ -37,7 +37,7 @@ impl<'a> CustomCapturer<'a> {
     }
   }
 
-  pub fn new(ctx: &'a DuplicationContext, buffer: &'a mut [u8]) -> Result<Self> {
+  pub fn new(ctx: &'a Monitor, buffer: &'a mut [u8]) -> Result<Self> {
     let (texture, _desc, texture_desc) = ctx.create_readable_texture()?;
     Ok(Self::with_texture(ctx, buffer, texture, texture_desc))
   }
@@ -123,7 +123,7 @@ impl Capturer for CustomCapturer<'_> {
   }
 }
 
-impl DuplicationContext {
+impl Monitor {
   pub fn custom_capturer<'a>(&'a self, buffer: &'a mut [u8]) -> Result<CustomCapturer<'a>> {
     CustomCapturer::<'a>::new(self, buffer)
   }
@@ -133,7 +133,7 @@ impl DuplicationContext {
 mod tests {
   use crate::{
     capturer::model::Capturer,
-    duplication_context::DuplicationContext,
+    monitor::Monitor,
     utils::{FrameInfoExt, OutDuplDescExt},
   };
   use serial_test::serial;
@@ -142,7 +142,7 @@ mod tests {
   #[test]
   #[serial]
   fn custom_capturer() {
-    let ctx = DuplicationContext::factory().unwrap().next().unwrap();
+    let ctx = Monitor::factory().unwrap().next().unwrap();
     let desc = ctx.dxgi_outdupl_desc();
     let mut buffer = vec![0u8; desc.calc_buffer_size()];
     let mut capturer = ctx.custom_capturer(&mut buffer).unwrap();

@@ -1,7 +1,7 @@
 use super::model::Capturer;
-use crate::duplication_context::DuplicationContext;
 use crate::utils::OutDuplDescExt;
 use crate::Error;
+use crate::Monitor;
 use crate::Result;
 use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
 use windows::Win32::Graphics::Dxgi::{
@@ -12,7 +12,7 @@ use windows::Win32::Graphics::{Direct3D11::ID3D11Texture2D, Dxgi::DXGI_OUTPUT_DE
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
   buffer: Vec<u8>,
-  ctx: &'a DuplicationContext,
+  ctx: &'a Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
@@ -20,7 +20,7 @@ pub struct SimpleCapturer<'a> {
 }
 
 impl<'a> SimpleCapturer<'a> {
-  pub fn new(ctx: &'a DuplicationContext) -> Result<Self> {
+  pub fn new(ctx: &'a Monitor) -> Result<Self> {
     let (buffer, texture, texture_desc) = Self::allocate(ctx)?;
     Ok(Self {
       buffer,
@@ -32,9 +32,7 @@ impl<'a> SimpleCapturer<'a> {
     })
   }
 
-  fn allocate(
-    ctx: &'a DuplicationContext,
-  ) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
+  fn allocate(ctx: &'a Monitor) -> Result<(Vec<u8>, ID3D11Texture2D, D3D11_TEXTURE2D_DESC)> {
     let (texture, desc, texture_desc) = ctx.create_readable_texture()?;
     let buffer = vec![0u8; desc.calc_buffer_size()];
     Ok((buffer, texture, texture_desc))
@@ -121,7 +119,7 @@ impl Capturer for SimpleCapturer<'_> {
   }
 }
 
-impl DuplicationContext {
+impl Monitor {
   pub fn simple_capturer(&self) -> Result<SimpleCapturer> {
     SimpleCapturer::new(self)
   }
@@ -129,16 +127,14 @@ impl DuplicationContext {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    capturer::model::Capturer, duplication_context::DuplicationContext, utils::FrameInfoExt,
-  };
+  use crate::{capturer::model::Capturer, monitor::Monitor, utils::FrameInfoExt};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn simple_capturer() {
-    let ctx = DuplicationContext::factory().unwrap().next().unwrap();
+    let ctx = Monitor::factory().unwrap().next().unwrap();
     let mut capturer = ctx.simple_capturer().unwrap();
 
     // sleep for a while before capture to wait system to update the screen

@@ -1,5 +1,5 @@
 use super::model::Capturer;
-use crate::duplication_context::DuplicationContext;
+use crate::Monitor;
 use crate::utils::OutDuplDescExt;
 use crate::Error;
 use crate::Result;
@@ -27,7 +27,7 @@ pub struct SharedCapturer<'a> {
   buffer: *mut u8,
   buffer_size: usize,
   file: HANDLE,
-  ctx: &'a DuplicationContext,
+  ctx: &'a Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
@@ -35,7 +35,7 @@ pub struct SharedCapturer<'a> {
 }
 
 impl<'a> SharedCapturer<'a> {
-  pub fn new(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
+  pub fn new(ctx: &'a Monitor, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture, texture_desc) = Self::allocate(ctx, name)?;
     Ok(Self {
       buffer,
@@ -49,7 +49,7 @@ impl<'a> SharedCapturer<'a> {
     })
   }
 
-  pub fn open(ctx: &'a DuplicationContext, name: &str) -> Result<Self> {
+  pub fn open(ctx: &'a Monitor, name: &str) -> Result<Self> {
     let (buffer, buffer_size, file, texture, texture_desc) = Self::open_file(ctx, name)?;
     Ok(Self {
       buffer,
@@ -64,7 +64,7 @@ impl<'a> SharedCapturer<'a> {
   }
 
   fn allocate(
-    ctx: &'a DuplicationContext,
+    ctx: &'a Monitor,
     name: &str,
   ) -> Result<(
     *mut u8,
@@ -94,7 +94,7 @@ impl<'a> SharedCapturer<'a> {
   }
 
   fn open_file(
-    ctx: &'a DuplicationContext,
+    ctx: &'a Monitor,
     name: &str,
   ) -> Result<(
     *mut u8,
@@ -228,7 +228,7 @@ impl Capturer for SharedCapturer<'_> {
   }
 }
 
-impl DuplicationContext {
+impl Monitor {
   pub fn shared_capturer(&self, name: &str) -> Result<SharedCapturer> {
     SharedCapturer::new(self, name)
   }
@@ -246,16 +246,14 @@ impl Drop for SharedCapturer<'_> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{
-    capturer::model::Capturer, duplication_context::DuplicationContext, utils::FrameInfoExt,
-  };
+  use crate::{capturer::model::Capturer, monitor::Monitor, utils::FrameInfoExt};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
   #[test]
   #[serial]
   fn shared_capturer() {
-    let ctx = DuplicationContext::factory().unwrap().next().unwrap();
+    let ctx = Monitor::factory().unwrap().next().unwrap();
 
     let mut capturer = ctx.shared_capturer("RustyDuplicationTest").unwrap();
 

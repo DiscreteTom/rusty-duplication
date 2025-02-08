@@ -1,4 +1,4 @@
-use super::DuplicationContext;
+use super::Monitor;
 use crate::{Error, Result};
 use std::ptr::null_mut;
 use windows::core::Interface;
@@ -14,10 +14,10 @@ use windows::Win32::{
   },
 };
 
-/// Factory of [`DuplicationContext`].
+/// Factory of [`Monitor`].
 /// # Examples
 /// ```no_run
-/// use rusty_duplication::duplication_context::Factory;
+/// use rusty_duplication::Factory;
 ///
 /// // create a new factory
 /// let mut factory = Factory::new().unwrap();
@@ -54,7 +54,7 @@ impl Factory {
     })
   }
 
-  fn get_current_ctx(&mut self) -> Option<DuplicationContext> {
+  fn get_current_ctx(&mut self) -> Option<Monitor> {
     let output_index = self.next_output_index;
     self.next_output_index += 1;
 
@@ -62,7 +62,7 @@ impl Factory {
     let output = unsafe { self.adapter.EnumOutputs(output_index) }.ok()?;
     let output = output.cast::<IDXGIOutput1>().unwrap();
     let output_duplication = unsafe { output.DuplicateOutput(&self.device) }.ok()?;
-    Some(DuplicationContext::new(
+    Some(Monitor::new(
       self.device.clone(),
       self.device_context.clone(),
       output,
@@ -72,7 +72,7 @@ impl Factory {
 }
 
 impl Iterator for Factory {
-  type Item = DuplicationContext;
+  type Item = Monitor;
 
   fn next(&mut self) -> Option<Self::Item> {
     loop {

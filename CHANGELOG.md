@@ -8,12 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- `Factory` to create `DuplicateContext`.
+- `Factory` to create `Monitor`.
 
 ### Changed
 
 - Rewrite `Error`.
 - Re-organize export.
+- Rename `DuplicationContext` to `Monitor`.
 
 ### Removed
 
