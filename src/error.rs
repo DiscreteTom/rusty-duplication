@@ -37,7 +37,7 @@ impl Error {
 
 #[cfg(test)]
 mod tests {
-  use super::Error;
+  use super::*;
 
   #[test]
   fn format_error() {

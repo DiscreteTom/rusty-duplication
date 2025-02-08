@@ -1,9 +1,8 @@
+use crate::model::MouseUpdateStatus;
 use windows::Win32::Graphics::{
   Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
   Gdi::MONITORINFO,
 };
-
-use crate::model::MouseUpdateStatus;
 
 pub trait OutputDescExt {
   fn width(&self) -> u32;
@@ -68,12 +67,11 @@ impl MonitorInfoExt for MONITORINFO {
 
 #[cfg(test)]
 mod tests {
+  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, OutputDescExt};
   use windows::Win32::Graphics::{
     Dxgi::{DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
     Gdi::MONITORINFO,
   };
-
-  use crate::utils::{FrameInfoExt, MonitorInfoExt, OutDuplDescExt, OutputDescExt};
 
   #[test]
   fn output_desc_ext() {

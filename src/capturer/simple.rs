@@ -1,13 +1,11 @@
 use super::model::Capturer;
-use crate::utils::OutDuplDescExt;
-use crate::Error;
-use crate::Monitor;
-use crate::Result;
-use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
-use windows::Win32::Graphics::Dxgi::{
-  DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
+use crate::{utils::OutDuplDescExt, Error, Monitor, Result};
+use windows::Win32::Graphics::{
+  Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
+  Dxgi::{
+    DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
+  },
 };
-use windows::Win32::Graphics::{Direct3D11::ID3D11Texture2D, Dxgi::DXGI_OUTPUT_DESC};
 
 /// Capture screen to a `Vec<u8>`.
 pub struct SimpleCapturer<'a> {
@@ -127,7 +125,7 @@ impl Monitor {
 
 #[cfg(test)]
 mod tests {
-  use crate::{capturer::model::Capturer, monitor::Monitor, utils::FrameInfoExt};
+  use crate::{capturer::model::Capturer, utils::FrameInfoExt, Monitor};
   use serial_test::serial;
   use std::{thread, time::Duration};
 

@@ -2,11 +2,8 @@ mod factory;
 
 pub use factory::*;
 
-use crate::Error;
-use crate::{utils::FrameInfoExt, Result};
+use crate::{utils::FrameInfoExt, Error, Result};
 use std::ptr;
-use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_DESC;
-use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO};
 use windows::{
   core::Interface,
   Win32::Graphics::{
@@ -17,9 +14,10 @@ use windows::{
     Dxgi::{
       Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
       IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, IDXGISurface1, DXGI_MAPPED_RECT,
-      DXGI_MAP_READ, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
-      DXGI_RESOURCE_PRIORITY_MAXIMUM,
+      DXGI_MAP_READ, DXGI_OUTDUPL_DESC, DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
+      DXGI_OUTPUT_DESC, DXGI_RESOURCE_PRIORITY_MAXIMUM,
     },
+    Gdi::{GetMonitorInfoW, MONITORINFO},
   },
 };
 

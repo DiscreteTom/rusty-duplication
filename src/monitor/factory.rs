@@ -1,16 +1,17 @@
-use super::Monitor;
-use crate::{Error, Result};
+use crate::{Error, Monitor, Result};
 use std::ptr::null_mut;
-use windows::core::Interface;
-use windows::Win32::{
-  Foundation::HMODULE,
-  Graphics::{
-    Direct3D::D3D_DRIVER_TYPE_UNKNOWN,
-    Direct3D11::{
-      D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, D3D11_CREATE_DEVICE_FLAG,
-      D3D11_SDK_VERSION,
+use windows::{
+  core::Interface,
+  Win32::{
+    Foundation::HMODULE,
+    Graphics::{
+      Direct3D::D3D_DRIVER_TYPE_UNKNOWN,
+      Direct3D11::{
+        D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext, D3D11_CREATE_DEVICE_FLAG,
+        D3D11_SDK_VERSION,
+      },
+      Dxgi::{CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1},
     },
-    Dxgi::{CreateDXGIFactory1, IDXGIAdapter1, IDXGIFactory1, IDXGIOutput1},
   },
 };
 

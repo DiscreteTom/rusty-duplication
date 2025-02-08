@@ -1,25 +1,20 @@
 use super::model::Capturer;
-use crate::Monitor;
-use crate::utils::OutDuplDescExt;
-use crate::Error;
-use crate::Result;
+use crate::{utils::OutDuplDescExt, Error, Monitor, Result};
 use std::ffi::CString;
 use std::slice;
-use windows::core::PCSTR;
-use windows::Win32::Foundation::{CloseHandle, HANDLE};
-use windows::Win32::Graphics::Direct3D11::D3D11_TEXTURE2D_DESC;
-use windows::Win32::Graphics::Dxgi::DXGI_OUTDUPL_POINTER_SHAPE_INFO;
-use windows::Win32::System::Memory::{
-  CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
-  MEMORY_MAPPED_VIEW_ADDRESS,
-};
-use windows::Win32::{
-  Foundation::INVALID_HANDLE_VALUE,
-  Graphics::{
-    Direct3D11::ID3D11Texture2D,
-    Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTPUT_DESC},
+use windows::{
+  core::PCSTR,
+  Win32::{
+    Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE},
+    Graphics::{
+      Direct3D11::{ID3D11Texture2D, D3D11_TEXTURE2D_DESC},
+      Dxgi::{DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC},
+    },
+    System::Memory::{
+      CreateFileMappingA, MapViewOfFile, OpenFileMappingA, UnmapViewOfFile, FILE_MAP_ALL_ACCESS,
+      MEMORY_MAPPED_VIEW_ADDRESS, PAGE_READWRITE,
+    },
   },
-  System::Memory::PAGE_READWRITE,
 };
 
 /// Capture screen to a chunk of shared memory.
@@ -246,7 +241,7 @@ impl Drop for SharedCapturer<'_> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{capturer::model::Capturer, monitor::Monitor, utils::FrameInfoExt};
+  use crate::{capturer::model::Capturer, utils::FrameInfoExt, Monitor};
   use serial_test::serial;
   use std::{thread, time::Duration};
 
