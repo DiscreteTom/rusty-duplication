@@ -274,7 +274,7 @@ mod tests {
 
     // check pointer shape
     let (frame_info, pointer_shape_info) = capturer.safe_capture_with_pointer_shape(300).unwrap();
-    assert!(frame_info.mouse_updated().position_updated);
+    assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
     let pointer_shape_data = capturer.pointer_shape_buffer();
     // make sure pointer shape buffer is not all zero

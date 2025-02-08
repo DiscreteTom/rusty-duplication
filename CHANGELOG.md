@@ -9,17 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `Scanner` to create `Monitor`.
+- `FrameInfoExt::pointer_shape_updated`.
 
 ### Changed
 
 - Rewrite `Error`.
 - Re-organize export.
 - Rename `DuplicationContext` to `Monitor`.
+- `FrameInfoExt::mouse_updated` will return a `bool`.
 
 ### Removed
 
 - `Manager`. Use `Scanner` instead.
 - `Monitor::new`.
+- `MouseUpdateStatus`. Use `FrameInfoExt::mouse_updated` and `FrameInfoExt::pointer_shape_updated` instead.
 
 ## [0.5.0] - 2023-05-08
 

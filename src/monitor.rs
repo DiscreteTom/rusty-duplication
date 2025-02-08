@@ -181,7 +181,7 @@ impl Monitor {
   )> {
     let (surface, frame_info) = self.acquire_next_frame(timeout_ms, readable_texture)?;
 
-    if !frame_info.mouse_updated().shape_updated {
+    if !frame_info.pointer_shape_updated() {
       self.release_frame()?;
       return Ok((surface, frame_info, None));
     }
@@ -361,7 +361,7 @@ mod tests {
         &mut pointer_shape_buffer,
       )
       .unwrap();
-    assert!(frame_info.mouse_updated().position_updated);
+    assert!(frame_info.mouse_updated());
     assert!(pointer_shape_info.is_some());
 
     // ensure pointer_shape_buffer not all zero

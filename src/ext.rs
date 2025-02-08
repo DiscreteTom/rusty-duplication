@@ -28,33 +28,24 @@ impl OutDuplDescExt for DXGI_OUTDUPL_DESC {
   }
 }
 
-pub struct MouseUpdateStatus {
-  pub position_updated: bool,
-  pub shape_updated: bool,
-}
-
 pub trait FrameInfoExt {
   fn desktop_updated(&self) -> bool;
-  fn mouse_updated(&self) -> MouseUpdateStatus;
+  /// Return `true` if the position or shape of the mouse was updated.
+  fn mouse_updated(&self) -> bool;
+  fn pointer_shape_updated(&self) -> bool;
 }
 
 impl FrameInfoExt for DXGI_OUTDUPL_FRAME_INFO {
   fn desktop_updated(&self) -> bool {
-    self.LastPresentTime > 0
+    self.LastPresentTime != 0
   }
 
-  fn mouse_updated(&self) -> MouseUpdateStatus {
-    if self.LastMouseUpdateTime > 0 {
-      MouseUpdateStatus {
-        position_updated: true,
-        shape_updated: self.PointerShapeBufferSize > 0,
-      }
-    } else {
-      MouseUpdateStatus {
-        position_updated: false,
-        shape_updated: false,
-      }
-    }
+  fn mouse_updated(&self) -> bool {
+    self.LastMouseUpdateTime != 0
+  }
+
+  fn pointer_shape_updated(&self) -> bool {
+    self.PointerShapeBufferSize > 0
   }
 }
 
@@ -101,12 +92,12 @@ mod tests {
     assert!(!desc.desktop_updated());
     desc.LastPresentTime = 1;
     assert!(desc.desktop_updated());
-    assert!(!desc.mouse_updated().position_updated);
+    assert!(!desc.mouse_updated());
     desc.LastMouseUpdateTime = 1;
-    assert!(desc.mouse_updated().position_updated);
-    assert!(!desc.mouse_updated().shape_updated);
+    assert!(desc.mouse_updated());
+    assert!(!desc.pointer_shape_updated());
     desc.PointerShapeBufferSize = 1;
-    assert!(desc.mouse_updated().shape_updated);
+    assert!(desc.pointer_shape_updated());
   }
 
   #[test]
