@@ -12,21 +12,24 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
       # set the version to the input. if the input is not set (triggered by tag), it will be the tag name
-      - run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_ENV
+      - shell: bash
+        run: echo "VERSION=${{ inputs.version || github.ref_name }}" >> $GITHUB_ENV
 
       # validate crate version
-      - run: |
+      - shell: bash
+        run: |
           VERSION=`cargo metadata --format-version=1 --no-deps | jq '.packages[0].version' | tr -d '"'`
           [ "v$VERSION" = "${{ env.VERSION }}" ] || (echo "Version mismatch" && exit 1)
 
       # validate CHANGELOG version
       # TODO: use a CHANGELOG linter
-      - run: |
+      - shell: bash
+        run: |
           VERSION=`cargo metadata --format-version=1 --no-deps | jq '.packages[0].version' | tr -d '"'`
           grep -q "## \[$VERSION\]" CHANGELOG.md || (echo "Version not found in CHANGELOG" && exit 1)
 
