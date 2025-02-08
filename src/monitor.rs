@@ -168,6 +168,7 @@ impl Monitor {
   /// Get the next frame without pointer shape.
   ///
   /// To get the pointer shape, use [`Self::next_frame_with_pointer_shape`].
+  #[inline]
   pub(crate) fn next_frame(
     &self,
     timeout_ms: u32,
