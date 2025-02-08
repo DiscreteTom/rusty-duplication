@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FrameInfoExt::pointer_shape_updated`.
 - `Capturer::monitor`.
 - `Capturer::pointer_shape_buffer_mut`.
+- `Capturer::capture_unchecked` and `Capturer::capture_with_pointer_shape_unchecked`.
 
 ### Changed
 
@@ -20,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Rename `DuplicationContext` to `Monitor`.
 - `FrameInfoExt::mouse_updated` will return a `bool`.
 - Capturers will consume the `Monitor`. You can clone `Monitor` to create multiple capturers.
+- `Capturer::capture` and `Capturer::capture_with_pointer_shape` is safe now.
 
 ### Removed
 
@@ -29,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `MouseUpdateStatus`. Use `FrameInfoExt::mouse_updated` and `FrameInfoExt::pointer_shape_updated` instead.
 - `Monitor::simple_capturer`, `Monitor::shared_capturer`, `Monitor::shared_capturer_open`, `Monitor::custom_capturer`. Use capturer's `new` to create capturers.
 - `Capturer::dxgi_output_desc` and `Capturer::dxgi_outdupl_desc`. Use `Capturer::monitor` instead.
+- `Capturer::safe_capture` and `Capturer::safe_capture_with_pointer_shape`. Use `Capturer::capture` and `Capturer::capture_with_pointer_shape` instead.
 
 ## [0.5.0] - 2023-05-08
 

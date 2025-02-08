@@ -46,18 +46,23 @@ pub trait Capturer {
   fn pointer_shape_buffer_mut(&mut self) -> &mut [u8];
 
   /// Capture the screen and return the frame info.
-  /// The pixel data is stored in the `buffer`.
-  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
-
-  /// Check buffer size before capture.
-  /// The pixel data is stored in the `buffer`.
-  fn safe_capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+  /// The pixel data is stored in the [`Capturer::buffer`].
+  /// # Safety
+  /// You have to ensure [`Capturer::buffer`] is large enough to hold the frame.
+  /// You can use [`Capturer::check_buffer`] to check the buffer size.
+  unsafe fn capture_unchecked(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
 
   /// Capture the screen and return the frame info.
-  /// The pixel data is stored in the `buffer`.
+  /// The pixel data is stored in the [`Capturer::buffer`].
+  ///
+  /// This will call [`Capturer::check_buffer`] to check the buffer size.
+  fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO>;
+
+  /// Capture the screen and return the frame info.
+  /// The pixel data is stored in the [`Capturer::buffer`].
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
   /// The pointer shape is stored in the `pointer_shape_buffer`.
-  fn capture_with_pointer_shape(
+  unsafe fn capture_with_pointer_shape_unchecked(
     &mut self,
     timeout_ms: u32,
   ) -> Result<(
@@ -69,7 +74,7 @@ pub trait Capturer {
   /// The pixel data is stored in the `buffer`.
   /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
   /// The pointer shape is stored in the `pointer_shape_buffer`.
-  fn safe_capture_with_pointer_shape(
+  fn capture_with_pointer_shape(
     &mut self,
     timeout_ms: u32,
   ) -> Result<(
