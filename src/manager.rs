@@ -41,16 +41,15 @@ impl Manager {
 
     // collect adapters and outputs
     for adapter_index in 0.. {
-      let adapter = match unsafe { factory.EnumAdapters1(adapter_index) } {
-        Ok(adapter) => adapter,
-        Err(_) => break,
+      let Ok(adapter) = (unsafe { factory.EnumAdapters1(adapter_index) }) else {
+        break;
       };
       let mut outputs = Vec::new();
       for output_index in 0.. {
-        match unsafe { adapter.EnumOutputs(output_index) } {
-          Err(_) => break,
-          Ok(output) => outputs.push(output),
-        }
+        let Ok(output) = (unsafe { adapter.EnumOutputs(output_index) }) else {
+          break;
+        };
+        outputs.push(output);
       }
       if !outputs.is_empty() {
         adapter_outputs.push((adapter, outputs))
