@@ -99,15 +99,13 @@ impl Monitor {
       CPUAccessFlags: D3D11_CPU_ACCESS_READ.0 as u32,
       MiscFlags: D3D11_RESOURCE_MISC_FLAG::default().0 as u32,
       Usage: D3D11_USAGE_STAGING, // A resource that supports data transfer (copy) from the GPU to the CPU.
-      Width: if output_desc.Rotation.0 == 2 || output_desc.Rotation.0 == 4 {
-        dupl_desc.ModeDesc.Height
-      } else {
-        dupl_desc.ModeDesc.Width
+      Width: match output_desc.Rotation.0 {
+        2 | 4 => dupl_desc.ModeDesc.Height,
+        _ => dupl_desc.ModeDesc.Width,
       },
-      Height: if output_desc.Rotation.0 == 2 || output_desc.Rotation.0 == 4 {
-        dupl_desc.ModeDesc.Width
-      } else {
-        dupl_desc.ModeDesc.Height
+      Height: match output_desc.Rotation.0 {
+        2 | 4 => dupl_desc.ModeDesc.Width,
+        _ => dupl_desc.ModeDesc.Height,
       },
       MipLevels: 1,
       ArraySize: 1,
@@ -119,7 +117,7 @@ impl Monitor {
     };
 
     // create a readable texture in GPU memory
-    let mut readable_texture: Option<ID3D11Texture2D> = None.clone();
+    let mut readable_texture: Option<ID3D11Texture2D> = None;
     unsafe {
       self
         .device
@@ -137,6 +135,8 @@ impl Monitor {
     Ok((readable_texture, dupl_desc, texture_desc))
   }
 
+  /// # Caveats
+  /// Remember to call `release_frame` after `acquire_next_frame`.
   fn acquire_next_frame(
     &self,
     timeout_ms: u32,
@@ -144,7 +144,7 @@ impl Monitor {
   ) -> Result<(IDXGISurface1, DXGI_OUTDUPL_FRAME_INFO)> {
     // acquire GPU texture
     let mut frame_info = DXGI_OUTDUPL_FRAME_INFO::default();
-    let mut resource: Option<IDXGIResource> = None.clone();
+    let mut resource: Option<IDXGIResource> = None;
     unsafe {
       self
         .output_duplication
@@ -167,6 +167,9 @@ impl Monitor {
     )))
   }
 
+  /// Get the next frame without pointer shape.
+  ///
+  /// To get the pointer shape, use [`Self::next_frame_with_pointer_shape`].
   pub fn next_frame(
     &self,
     timeout_ms: u32,
@@ -177,8 +180,8 @@ impl Monitor {
     Ok((surface, frame_info))
   }
 
-  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is `Some`.
-  /// and this will resize `pointer_shape_buffer` if needed and update it.
+  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
+  /// This will resize `pointer_shape_buffer` if needed and update it.
   pub fn next_frame_with_pointer_shape(
     &self,
     timeout_ms: u32,
@@ -205,27 +208,22 @@ impl Monitor {
     // get pointer shape
     let mut size: u32 = 0;
     let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
-    match unsafe {
-      self
-        .output_duplication
-        .GetFramePointerShape(
-          pointer_shape_buffer.len() as u32,
-          pointer_shape_buffer.as_mut_ptr() as *mut _,
-          &mut size,
-          &mut pointer_shape_info,
-        )
-        .map_err(Error::from_win_err(stringify!(
-          IDXGIOutputDuplication.GetFramePointerShape
-        )))
-    } {
-      Ok(_) => {
-        self.release_frame()?;
-        Ok((surface, frame_info, Some(pointer_shape_info)))
-      }
-      Err(e) => {
-        self.release_frame()?;
-        Err(e)
-      }
+    let r = unsafe {
+      self.output_duplication.GetFramePointerShape(
+        pointer_shape_buffer.len() as u32,
+        pointer_shape_buffer.as_mut_ptr() as *mut _,
+        &mut size,
+        &mut pointer_shape_info,
+      )
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.GetFramePointerShape
+    )));
+    self.release_frame()?;
+
+    match r {
+      Ok(_) => Ok((surface, frame_info, Some(pointer_shape_info))),
+      Err(e) => Err(e),
     }
   }
 
