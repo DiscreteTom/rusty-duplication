@@ -87,7 +87,7 @@ impl Monitor {
     unsafe { self.output_duplication.GetDesc() }
   }
 
-  pub fn create_readable_texture(
+  pub(crate) fn create_readable_texture(
     &self,
   ) -> Result<(ID3D11Texture2D, DXGI_OUTDUPL_DESC, D3D11_TEXTURE2D_DESC)> {
     let dupl_desc = self.dxgi_outdupl_desc();
