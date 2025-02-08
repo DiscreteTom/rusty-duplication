@@ -26,7 +26,6 @@ pub struct SharedCapturer {
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
   pointer_shape_buffer: Vec<u8>,
-  pointer_shape_buffer_size: usize,
 }
 
 impl SharedCapturer {
@@ -40,7 +39,6 @@ impl SharedCapturer {
       texture_desc,
       monitor,
       pointer_shape_buffer: Vec::new(),
-      pointer_shape_buffer_size: 0,
     })
   }
 
@@ -54,7 +52,6 @@ impl SharedCapturer {
       texture_desc,
       monitor,
       pointer_shape_buffer: Vec::new(),
-      pointer_shape_buffer_size: 0,
     })
   }
 
@@ -169,11 +166,11 @@ impl Capturer for SharedCapturer {
   }
 
   fn pointer_shape_buffer(&self) -> &[u8] {
-    &self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
+    &self.pointer_shape_buffer
   }
 
   fn pointer_shape_buffer_mut(&mut self) -> &mut [u8] {
-    &mut self.pointer_shape_buffer[..self.pointer_shape_buffer_size]
+    &mut self.pointer_shape_buffer
   }
 
   fn capture(&mut self, timeout_ms: u32) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
@@ -217,11 +214,6 @@ impl Capturer for SharedCapturer {
         &self.texture_desc,
       )
     }?;
-
-    if pointer_shape_info.is_some() {
-      // record the pointer shape buffer size
-      self.pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
-    }
 
     Ok((frame_info, pointer_shape_info))
   }
