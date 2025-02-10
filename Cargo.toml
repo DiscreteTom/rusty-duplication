@@ -25,3 +25,6 @@ windows = { version = "0.59.0", features = [
 [dev-dependencies]
 serial_test = "2"
 image = "0.25.5"
+
+[package.metadata.docs.rs]
+default-target = ["x86_64-pc-windows-msvc"]
