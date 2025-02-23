@@ -98,6 +98,7 @@ impl<Buffer> Capturer<Buffer> {
 
     Ok(frame_info)
   }
+
   /// Capture the screen and return the frame info.
   /// The pixel data is stored in the [`Self::buffer`].
   ///
@@ -143,10 +144,10 @@ impl<Buffer> Capturer<Buffer> {
     Ok((frame_info, pointer_shape_info))
   }
 
-  /// Check buffer size before capture.
+  /// Capture the screen and return the frame info.
   /// The pixel data is stored in the [`Self::buffer`].
   ///
-  /// If mouse is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` is Some.
+  /// If the pointer shape is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
   /// The pointer shape is stored in the [`Self::pointer_shape_buffer`].
   ///
   /// This will call [`Self::check_buffer`] to check the buffer size.
