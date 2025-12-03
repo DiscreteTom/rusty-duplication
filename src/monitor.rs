@@ -1,18 +1,21 @@
 use crate::{Error, FrameInfoExt, Result};
 use windows::{
   core::Interface,
-  Win32::Graphics::{
-    Direct3D11::{
-      ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D, D3D11_BIND_FLAG, D3D11_CPU_ACCESS_READ,
-      D3D11_RESOURCE_MISC_FLAG, D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
+  Win32::{
+    Foundation::RECT,
+    Graphics::{
+      Direct3D11::{
+        ID3D11Device, ID3D11DeviceContext, ID3D11Texture2D, D3D11_BIND_FLAG, D3D11_BOX,
+        D3D11_CPU_ACCESS_READ, D3D11_RESOURCE_MISC_FLAG, D3D11_TEXTURE2D_DESC, D3D11_USAGE_STAGING,
+      },
+      Dxgi::{
+        Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
+        IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, DXGI_OUTDUPL_DESC,
+        DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_MOVE_RECT, DXGI_OUTDUPL_POINTER_SHAPE_INFO,
+        DXGI_OUTPUT_DESC, DXGI_RESOURCE_PRIORITY_MAXIMUM,
+      },
+      Gdi::{GetMonitorInfoW, MONITORINFO},
     },
-    Dxgi::{
-      Common::{DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_SAMPLE_DESC},
-      IDXGIOutput1, IDXGIOutputDuplication, IDXGIResource, DXGI_OUTDUPL_DESC,
-      DXGI_OUTDUPL_FRAME_INFO, DXGI_OUTDUPL_POINTER_SHAPE_INFO, DXGI_OUTPUT_DESC,
-      DXGI_RESOURCE_PRIORITY_MAXIMUM,
-    },
-    Gdi::{GetMonitorInfoW, MONITORINFO},
   },
 };
 
@@ -165,6 +168,207 @@ impl Monitor {
     Ok(r)
   }
 
+  /// Try to process the next frame with delta updates (only copying dirty and moved regions).
+  /// If `use_delta` is false or this is the first frame, does a full copy.
+  fn process_next_frame_delta<R>(
+    &self,
+    timeout_ms: u32,
+    texture: &ID3D11Texture2D,
+    use_delta: bool,
+    cb: impl FnOnce(DXGI_OUTDUPL_FRAME_INFO) -> R,
+  ) -> Result<R> {
+    // acquire GPU texture
+    let mut frame_info = DXGI_OUTDUPL_FRAME_INFO::default();
+    let mut resource: Option<IDXGIResource> = None;
+    unsafe {
+      self
+        .output_duplication
+        .AcquireNextFrame(timeout_ms, &mut frame_info, &mut resource)
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.AcquireNextFrame
+    )))?;
+    let new_texture: ID3D11Texture2D = resource.unwrap().cast().unwrap();
+
+    if use_delta {
+      // Get dirty rectangles
+      let dirty_rects = self.get_frame_dirty_rects()?;
+      
+      // Get move rectangles
+      let move_rects = self.get_frame_move_rects()?;
+
+      // Copy dirty regions
+      for rect in &dirty_rects {
+        self.copy_subresource_region(texture, &new_texture, rect);
+      }
+
+      // Copy moved regions
+      // For move rects, we need to copy from the source position to the destination position
+      for move_rect in &move_rects {
+        // Copy from source position
+        let src_rect = RECT {
+          left: move_rect.SourcePoint.x,
+          top: move_rect.SourcePoint.y,
+          right: move_rect.SourcePoint.x + (move_rect.DestinationRect.right - move_rect.DestinationRect.left),
+          bottom: move_rect.SourcePoint.y + (move_rect.DestinationRect.bottom - move_rect.DestinationRect.top),
+        };
+        
+        // Copy to destination position
+        self.copy_subresource_region_to_dest(
+          texture,
+          &new_texture,
+          &src_rect,
+          move_rect.DestinationRect.left as u32,
+          move_rect.DestinationRect.top as u32,
+        );
+      }
+    } else {
+      // Do full copy for first frame or when delta is disabled
+      unsafe { self.device_context.CopyResource(texture, &new_texture) };
+    }
+
+    let r = cb(frame_info);
+
+    unsafe { self.output_duplication.ReleaseFrame() }.map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.ReleaseFrame
+    )))?;
+
+    Ok(r)
+  }
+
+  /// Get dirty rectangles for the current frame.
+  fn get_frame_dirty_rects(&self) -> Result<Vec<RECT>> {
+    // First call to get the required buffer size
+    let mut required_size: u32 = 0;
+    unsafe {
+      self.output_duplication.GetFrameDirtyRects(
+        0,
+        std::ptr::null_mut(),
+        &mut required_size,
+      )
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.GetFrameDirtyRects
+    )))?;
+
+    // If there are no dirty rects, return empty vector
+    if required_size == 0 {
+      return Ok(Vec::new());
+    }
+
+    // Allocate buffer and get dirty rects
+    let rect_count = (required_size as usize) / std::mem::size_of::<RECT>();
+    let mut dirty_rects = vec![RECT::default(); rect_count];
+    
+    unsafe {
+      self.output_duplication.GetFrameDirtyRects(
+        required_size,
+        dirty_rects.as_mut_ptr(),
+        &mut required_size,
+      )
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.GetFrameDirtyRects
+    )))?;
+
+    Ok(dirty_rects)
+  }
+
+  /// Get move rectangles for the current frame.
+  fn get_frame_move_rects(&self) -> Result<Vec<DXGI_OUTDUPL_MOVE_RECT>> {
+    // First call to get the required buffer size
+    let mut required_size: u32 = 0;
+    unsafe {
+      self.output_duplication.GetFrameMoveRects(
+        0,
+        std::ptr::null_mut(),
+        &mut required_size,
+      )
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.GetFrameMoveRects
+    )))?;
+
+    // If there are no move rects, return empty vector
+    if required_size == 0 {
+      return Ok(Vec::new());
+    }
+
+    // Allocate buffer and get move rects
+    let rect_count = (required_size as usize) / std::mem::size_of::<DXGI_OUTDUPL_MOVE_RECT>();
+    let mut move_rects = vec![DXGI_OUTDUPL_MOVE_RECT::default(); rect_count];
+    
+    unsafe {
+      self.output_duplication.GetFrameMoveRects(
+        required_size,
+        move_rects.as_mut_ptr(),
+        &mut required_size,
+      )
+    }
+    .map_err(Error::from_win_err(stringify!(
+      IDXGIOutputDuplication.GetFrameMoveRects
+    )))?;
+
+    Ok(move_rects)
+  }
+
+  /// Copy a subresource region from source to destination texture.
+  fn copy_subresource_region(&self, dst: &ID3D11Texture2D, src: &ID3D11Texture2D, rect: &RECT) {
+    let src_box = D3D11_BOX {
+      left: rect.left as u32,
+      top: rect.top as u32,
+      front: 0,
+      right: rect.right as u32,
+      bottom: rect.bottom as u32,
+      back: 1,
+    };
+
+    unsafe {
+      self.device_context.CopySubresourceRegion(
+        dst,
+        0, // DstSubresource
+        rect.left as u32, // DstX
+        rect.top as u32,  // DstY
+        0,                // DstZ
+        src,
+        0,                // SrcSubresource
+        Some(&src_box),
+      );
+    }
+  }
+
+  /// Copy a subresource region from source to a specific destination position.
+  fn copy_subresource_region_to_dest(
+    &self,
+    dst: &ID3D11Texture2D,
+    src: &ID3D11Texture2D,
+    src_rect: &RECT,
+    dst_x: u32,
+    dst_y: u32,
+  ) {
+    let src_box = D3D11_BOX {
+      left: src_rect.left as u32,
+      top: src_rect.top as u32,
+      front: 0,
+      right: src_rect.right as u32,
+      bottom: src_rect.bottom as u32,
+      back: 1,
+    };
+
+    unsafe {
+      self.device_context.CopySubresourceRegion(
+        dst,
+        0,      // DstSubresource
+        dst_x,  // DstX
+        dst_y,  // DstY
+        0,      // DstZ
+        src,
+        0,      // SrcSubresource
+        Some(&src_box),
+      );
+    }
+  }
+
   /// Get the next frame without pointer shape.
   ///
   /// To get the pointer shape, use [`Self::next_frame_with_pointer_shape`].
@@ -175,6 +379,18 @@ impl Monitor {
     texture: &ID3D11Texture2D,
   ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
     self.process_next_frame(timeout_ms, texture, |r| r)
+  }
+
+  /// Get the next frame without pointer shape, using delta updates.
+  /// If `use_delta` is false, does a full copy.
+  #[inline]
+  pub(crate) fn next_frame_delta(
+    &self,
+    timeout_ms: u32,
+    texture: &ID3D11Texture2D,
+    use_delta: bool,
+  ) -> Result<DXGI_OUTDUPL_FRAME_INFO> {
+    self.process_next_frame_delta(timeout_ms, texture, use_delta, |r| r)
   }
 
   /// If the pointer shape is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
@@ -190,6 +406,53 @@ impl Monitor {
   )> {
     self
       .process_next_frame(timeout_ms, texture, |frame_info| {
+        if !frame_info.pointer_shape_updated() {
+          return Ok((frame_info, None));
+        }
+
+        // resize buffer if needed
+        let pointer_shape_buffer_size = frame_info.PointerShapeBufferSize as usize;
+        if pointer_shape_buffer.len() < pointer_shape_buffer_size {
+          pointer_shape_buffer.resize(pointer_shape_buffer_size, 0);
+        }
+
+        // get pointer shape
+        let mut size: u32 = 0;
+        let mut pointer_shape_info = DXGI_OUTDUPL_POINTER_SHAPE_INFO::default();
+        unsafe {
+          self.output_duplication.GetFramePointerShape(
+            pointer_shape_buffer.len() as u32,
+            pointer_shape_buffer.as_mut_ptr() as *mut _,
+            &mut size,
+            &mut pointer_shape_info,
+          )
+        }
+        .map_err(Error::from_win_err(stringify!(
+          IDXGIOutputDuplication.GetFramePointerShape
+        )))?;
+        // fix buffer size
+        pointer_shape_buffer.truncate(size as usize);
+
+        Ok((frame_info, Some(pointer_shape_info)))
+      })
+      .and_then(|r| r)
+  }
+
+  /// If the pointer shape is updated, the `Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>` will be [`Some`].
+  /// This will resize `pointer_shape_buffer` if needed and update it.
+  /// Uses delta updates if `use_delta` is true.
+  pub(crate) fn next_frame_with_pointer_shape_delta(
+    &self,
+    timeout_ms: u32,
+    texture: &ID3D11Texture2D,
+    pointer_shape_buffer: &mut Vec<u8>,
+    use_delta: bool,
+  ) -> Result<(
+    DXGI_OUTDUPL_FRAME_INFO,
+    Option<DXGI_OUTDUPL_POINTER_SHAPE_INFO>,
+  )> {
+    self
+      .process_next_frame_delta(timeout_ms, texture, use_delta, |frame_info| {
         if !frame_info.pointer_shape_updated() {
           return Ok((frame_info, None));
         }

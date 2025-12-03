@@ -33,10 +33,15 @@ pub struct Capturer<Buffer> {
   /// Timeout in milliseconds for the next frame.
   /// By default it is 300ms.
   pub timeout_ms: u32,
+  /// Enable delta updates to only copy dirty and moved regions.
+  /// By default it is true.
+  pub use_delta_updates: bool,
 
   monitor: Monitor,
   texture: ID3D11Texture2D,
   texture_desc: D3D11_TEXTURE2D_DESC,
+  /// Track if we've done the initial full copy
+  first_frame_captured: bool,
 }
 
 impl<Buffer> Capturer<Buffer> {
@@ -58,6 +63,8 @@ impl<Buffer> Capturer<Buffer> {
       texture_desc,
       pointer_shape_buffer: Vec::new(),
       timeout_ms: 300,
+      use_delta_updates: true,
+      first_frame_captured: false,
     })
   }
 
@@ -88,7 +95,14 @@ impl<Buffer> Capturer<Buffer> {
   where
     Buffer: CapturerBuffer,
   {
-    let frame_info = self.monitor.next_frame(self.timeout_ms, &self.texture)?;
+    // Use delta updates only after the first frame and if enabled
+    let use_delta = self.use_delta_updates && self.first_frame_captured;
+    let frame_info = self.monitor.next_frame_delta(self.timeout_ms, &self.texture, use_delta)?;
+
+    // Mark that we've captured the first frame
+    if !self.first_frame_captured {
+      self.first_frame_captured = true;
+    }
 
     capture(
       &self.texture,
@@ -129,11 +143,19 @@ impl<Buffer> Capturer<Buffer> {
   where
     Buffer: CapturerBuffer,
   {
-    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape(
+    // Use delta updates only after the first frame and if enabled
+    let use_delta = self.use_delta_updates && self.first_frame_captured;
+    let (frame_info, pointer_shape_info) = self.monitor.next_frame_with_pointer_shape_delta(
       self.timeout_ms,
       &self.texture,
       &mut self.pointer_shape_buffer,
+      use_delta,
     )?;
+
+    // Mark that we've captured the first frame
+    if !self.first_frame_captured {
+      self.first_frame_captured = true;
+    }
 
     capture(
       &self.texture,
